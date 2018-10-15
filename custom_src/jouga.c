@@ -224,33 +224,46 @@ algorithm_color(void)
   }
 }
 
+
 void
 algorithm_dual(void)
 {
   for(;;) {
+    //白＝>うごいて
+    //ライトセンサー 白＝小さい
+    //色センサー 白=大きい
+
     wai_sem(Stskc);	// セマフォを待つことで定期的な実行を実現
     lval = get_light_sensor(Light);
     cval = get_light_sensor(Color);
-    int lgray = (lhigh + llow)/2; //ライトセンサ中間値
-    int cgray = (chigh + clow)/2; //カラーセンサ中間値
-    //白＝うごいて
-    //ライトセンサー　白＝小さい
-    //色センサー　白=大きい
-    int lturn = GAIN * (lval - lgray) * 100/(lhigh-llow);
-    int cturn = GAIN * (cval - cgray) * 100/(clow-chigh);
-    dbg1=LOWPOWER-lturn;
-    dbg2=LOWPOWER+cturn;
-    // ライトセンサーと右モーターの関係
+    /* int lgray = (lhigh + llow)/2; //ライトセンサ中間値 */
+    /* int cgray = (chigh + clow)/2; //カラーセンサ中間値 */
+    
+    //前回の失敗はこの上２つの変数　実際は下のやつが正解なはず
+    int lmid=llow+(lhigh-llow)/2;
+    int cmid=clow+(chigh-clow)/2;
     /*
-      (100-200)*100/(500-300) ex:白のライトセンサー
-     */
-      motor_set_speed(Rmotor, LOWPOWER-lturn, 1);
-      motor_set_speed(Lmotor, LOWPOWER+cturn, 1);
+      分数のところの説明
+      分子：現在の値が中央値からどれだけずれているか
+      分母：中央から端っこまでの距離の絶対値
+    */
+    int lturn = GAIN * 100 * (lval - lmid)/(lhigh - lmid);
+    int cturn = GAIN * 100 * (cval - cmid)/(chigh - cmid);
+    if(lturn>HIGHPOWER)
+      lturn=HIGHPOWER;
+    if(cturn>HIGHPOWER)
+      cturn=HIGHPOWER;
+
+    dbg1=lturn;
+    dbg2=cturn;
+    motor_set_speed(Rmotor, HIGHPOWER-lturn, 1);
+    //色センサーはここで符号を反転させる
+    motor_set_speed(Lmotor, HIGHPOWER+cturn, 1);
   }
 }
 
 /*
- *　ペナルティ計測用の関数
+ * ペナルティ計測用の関数
  *	直進して1500mm進んで止まるだけ
  */
 void
