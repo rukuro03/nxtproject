@@ -7,7 +7,7 @@
 #define JOUGA_H
 
 #ifndef _MACRO_ONLY
-#include "ecrobot_interface.h"	// ヘッダファイル中にガードあり
+#include "ecrobot_interface.h" // ヘッダファイル中にガードあり
 
 extern int lval, cval, llow, lhigh, clow, chigh;
 int get_light_sensor(int);

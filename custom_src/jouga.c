@@ -15,7 +15,7 @@
 #include "graphics.h"
 
 #define ARRAYSIZE(A)	(sizeof((A)) / sizeof((A)[0]))
-#define GAIN 10 //比例ゲイン
+#define GAIN 1 //比例ゲイン
 
 /* 型や関数の宣言 */
 typedef void (*MFunc)(void);
@@ -236,6 +236,18 @@ algorithm_dual(void)
     wai_sem(Stskc);	// セマフォを待つことで定期的な実行を実現
     lval = get_light_sensor(Light);
     cval = get_light_sensor(Color);
+    /*
+      取得した値がカリブレーションしたときより大きくなることもありうる
+    */
+    if(lval < llow)
+      low = lval;
+    else if(lval > lhigh)
+      lhigh = lval;
+    if(cval < clow)
+      clow = cval;
+    else if(cval > chigh)
+      chigh = cval;
+      
     /* int lgray = (lhigh + llow)/2; //ライトセンサ中間値 */
     /* int cgray = (chigh + clow)/2; //カラーセンサ中間値 */
     
@@ -249,11 +261,14 @@ algorithm_dual(void)
     */
     int lturn = GAIN * 100 * (lval - lmid)/(lhigh - lmid);
     int cturn = GAIN * 100 * (cval - cmid)/(chigh - cmid);
-    if(lturn>HIGHPOWER)
-      lturn=HIGHPOWER;
-    if(cturn>HIGHPOWER)
-      cturn=HIGHPOWER;
 
+    //GAINの関係で逆走しはじめないように
+    //THANK YOU!
+    if(lturn > HIGHPOWER)
+      lturn = HIGHPOWER;
+    if(cturn < -HIGHPOWER)
+      cturn = -HIGHPOWER;
+    
     dbg1=lturn;
     dbg2=cturn;
     motor_set_speed(Rmotor, HIGHPOWER-lturn, 1);
