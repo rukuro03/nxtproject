@@ -1,7 +1,8 @@
 .
 !.gitignore
-!Makefile
 !README.txt
-!BUREADME.txt
-!*/
+!jouga.c
+!jouga.h
+!/test
+
 
