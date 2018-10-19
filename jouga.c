@@ -28,6 +28,7 @@ typedef struct _NameFunc {
 } NameFunc;
 
 void calibration_func(void);
+void setting_func(void);
 void jouga_light(void);
 void jouga_color(void);
 void jouga_dual(void);
@@ -41,12 +42,14 @@ char name[17];
 int lval, cval;
 int llow = LOWVAL, lhigh = HIGHVAL;
 int clow = LOWVAL, chigh = HIGHVAL;
+int pgain=3,dgain=3;
 int dbg1, dbg2;//デバッグ用の変数
 void (*jouga_algorithm)(void) = algorithm_dual;	// デフォルトの設定
 
 NameFunc MainMenu[] = {
   {"Main Menu", NULL},
   {"Calibration", calibration_func},	// センサーのキャリブレーション
+  {"Setting", setting_func},            // ゲイン等の設定を行う
   {"Light", jouga_light},		// ライトセンサーを選択
   {"Color", jouga_color},		// カラーセンサーを選択
   {"Dual", jouga_dual},			// 2つを使うアルゴリズムを選択
@@ -163,6 +166,59 @@ calibration_func(void)
   lhigh = lmax;
   clow = cmin;
   chigh = cmax;
+}
+
+void
+setting_func(){//ゲイン設定用変数
+  int state=0;
+  int local_pgain=pgain;
+  int local_dgain=dgain;
+  for(;;){
+    display_clear(0);
+    display_goto_xy(1, 0);
+    display_string("PGAIN");
+    display_int(local_pgain,4);
+    display_goto_xy(1, 1);
+    display_string("DGAIN");
+    display_int(local_dgain,4);
+    if(state == 0)
+      display_goto_xy(0,0);
+    else
+      display_goto_xy(0,1);
+    display_string(">");
+    display_update();
+    
+    btn = get_btn();
+    switch (btn) {
+    case Obtn:	// オレンジボタン == 選択
+      if (state == 0){
+	state = 1;
+	pgain = local_pgain;
+	continue;
+      }
+      else{
+	dgain = local_dgain;
+	break;
+      }
+    case Cbtn:	// グレーボタン == キャンセル
+	continue;
+    case Rbtn:	// 右ボタン == 次へ
+      if(state == 0)
+	local_pgain++;
+      else
+	local_dgain++;
+      continue;
+    case Lbtn:	// 左ボタン == 前へ
+      if(state == 0)
+	local_pgain--;
+      else
+	local_dgain--;
+      continue;
+    default:	// 複数が押されている場合
+      continue;
+    }
+    break;
+  }
 }
 
 /*
@@ -296,12 +352,30 @@ void
 jouga_straight(void)
 {
   //##SEARCHSTRAIGHT
-  // モータの動作開始
-  static int R_COUNT;
-  static int L_COUNT;
+
+  /*
+    BACKGROUND:
+    左右同じパワーを与えてもモータが同じ速度で回転するわけではない
+    パワーだけで(motor_set_speedに与える引数だけで)考えるとまっすぐ進まなくなる
+    …らしい
+    てことはライントレースもそれを考えたらいいのか？わからないが少なくともペナルティは
+    直線コースであることが確かなので直線がしっかり走れるようなプログラムが必要
+    
+    PLAN:
+    左右同じ速度でモータが回転してほしいので、左右同じ速度になるように計測、パワーを補正する
+    モータの回転速度は何度モータが回転したかでわかるはず　それが左右同じになるパワーを探す
+  */
+  //モータの回転角保存用変数
+  int R_count;
+  int L_count;
+  //一応速度を初期化：
   motor_set_speed(Rmotor, HIGHPOWER, 1);
   motor_set_speed(Lmotor, HIGHPOWER, 1);
-  dly_tsk(4000);	// 1500mm進むまで待つ
+  for(;;){
+    R_count=nxt_motor_get_count(Rmotor);
+    L_count=nxt_motor_get_count(Lmotor);
+    //dly_tsk(4000);	// 1500mm進むまで待つ
+  }
   // モータの停止
   motor_set_speed(Rmotor, 0, 0);
   motor_set_speed(Lmotor, 0, 0);
@@ -315,7 +389,7 @@ void
 InitTsk(VP_INT exinf)
 {
   display_clear(0);	// なにはともあれ、画面をクリア
-  display_goto_xy(2, 3);
+  display_gotno_xy(2, 3);
   display_string("Initializing");
   display_update();
   // カラーセンサーを使う場合にはライトセンサーとして使う
