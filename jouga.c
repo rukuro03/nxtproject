@@ -169,85 +169,79 @@ calibration_func(void)
 }
 
 void
-sync_motor(){//左右のモータのシンクロ率を測ります
-  //あ　間違った　0~90までになっちゃった
+sync_motor(){
+  /*
+    左右のモータのシンクロ率を測ります
+    パワーを0から90まで上げながら、
+    左右のモータの回転速度(度/10ミリ秒)を表示します
+    0.5秒計測する→表示する→オレンジ押す→パワー上がる…
+    のループです　
+  */
+
   int pow=0,sum=0;
   int i,pos;
   int ldat[10]={0};
   int rdat[10]={0};
   nxtButton btn;
-  for(i=0;i<10;i++){//パワーを上げながら平均値を取得していきます
+  for(i=0;i<10;i++){
+    //パワーを上げながら値(度/10ミリ秒)を取得していきます
+    pow = i*10;
+    //わかってる値を表示
     display_clear(0);
     display_goto_xy(0,0);
-    pow = i*10;
     display_string("Testing...");
     display_goto_xy(0,1);
-    display_string("Power:");
+    display_string("Pow  L  R");
+    display_goto_xy(0,2);
     display_int(pow,4);
     display_update();
-    /*
-      テスト中は
-      Testing...
-      Power:<powの値>
-      みたいな表示が出ると思う
-     */
-    nxt_motor_set_count(Rmotor, 0);//初期化？
-    nxt_motor_set_count(Lmotor, 0);
+    //モータ回転開始
     motor_set_speed(Rmotor, pow, 1);//パワーを与え
     motor_set_speed(Lmotor, pow, 1);
-    dly_tsk(500);//0.5s待機 トータル5秒は妥当？
-    rdat[i]=nxt_motor_get_count(Rmotor);//回転角度取得
-    ldat[i]=nxt_motor_get_count(Lmotor);
+    nxt_motor_set_count(Rmotor, 0);//回転角初期化？
+    nxt_motor_set_count(Lmotor, 0);
+    dly_tsk(500);//0.5s待機
+    rdat[i]=nxt_motor_get_count(Rmotor)/50;//回転角度取得
+    ldat[i]=nxt_motor_get_count(Lmotor)/50;
+    //回転速度表示
+    display_string(" ");
+    display_int(ldat[i],4);
+    display_string(" ");
+    display_int(rdat[i],4);
+    display_goto_xy(0,3);
+    display_string(">Press Orange");
+    display_update();
+    do{
+      btn = get_btn();//オレンジボタンで次に進む
+    }while(btn!=Obtn);
+    /*
+      Testing...
+      Pow  L  R
+      10  1300 1000
+      >Press Orange
+      みたいな表示が出ると思う
+    */
   }
   //一応ひと目でわかるように適当な誤差値を出すようにする
   //とりあえず小さいほどいい感じ
   for(i=0;i<10;i++){
     sum += (rdat[i] - ldat[i]) * (rdat[i] - ldat[i]);
   }
-  for(;;)
-    {
-      display_clear(0);
-      display_goto_xy(0,0);
-      display_string("Error:");
-      display_int(sum,4);
-      display_goto_xy(0,1);
-      display_string("Pow  L   R");
-      for(i=0;i<3;i++){//３つ表示しよう
-	display_goto_xy(0,i+2);
-	display_int((i+pos)*10,4);//パワー
-	display_string(" ");
-	display_int(ldat[i+pos],4);
-	//4桁に抑えたい ここは実際に動かさないとわかんない
-	display_string(" ");
-	display_int(rdat[i+pos],4);
-      }
-      display_update();
-      /*
-	この間は
-	Error:200
-	Pow  L  R
-	0 1000 2000
-	10 3000 3000
-	20 3999 4000
-	みたいな表示がでて、右左で範囲が変えられる的な
-       */
-      btn = get_btn();
-      switch (btn) {
-      case Obtn:	// オレンジ、グレー == 終了
-      case Cbtn:	
-	return;
-      case Rbtn:	// 右ボタン == 次へ
-	if(pos < 7 )
-	  pos++;
-	break;
-      case Lbtn:	// 左ボタン == 前へ
-	if(pos > 0)
-	  pos--;
-	break;
-      default:	// 複数が押されている場合
-	break;
-      }
-    }
+  display_clear(0);
+  display_goto_xy(0,0);
+  display_string("Result:");
+  display_int(sum,4);
+  display_goto_xy(0,1);
+  display_string("Press Orange");
+  display_update();
+  /*この間は
+    Result:1000
+    Press Orange
+    　みたいな表示が出ている
+  */
+  do{
+    btn = get_btn();
+  }while(btn != Obtn);
 }
 
 void
