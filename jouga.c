@@ -16,9 +16,6 @@
 
 #define ARRAYSIZE(A)	(sizeof((A)) / sizeof((A)[0]))
 //1-4 x 3-3 x 3-10x 6-8
-#define PGAIN_LOW 3 //比例ゲイン
-#define PGAIN_HIGH 8 //比例ゲイン
-#define DGAIN 10//微分ゲイン 
 #define STRAIGHT 50//まっすぐ走ってると認識する幅 
 /* 型や関数の宣言 */
 typedef void (*MFunc)(void);
@@ -43,7 +40,7 @@ char name[17];
 int lval, cval;
 int llow = LOWVAL, lhigh = HIGHVAL;
 int clow = LOWVAL, chigh = HIGHVAL;
-int pgain=3,dgain=3;
+int pgain_low=3,pgain_high=5,dgain=3;
 int dbg1, dbg2;//デバッグ用の変数
 void (*jouga_algorithm)(void) = algorithm_dual;	// デフォルトの設定
 
@@ -247,53 +244,58 @@ sync_motor(){
 void
 setting_func(){//ゲイン設定用変数
   int state=0;
-  int local_pgain=pgain;
+  int local_pgain_low=pgain_low;
+  int local_pgain_high=pgain_high;
   int local_dgain=dgain;
   for(;;){
     display_clear(0);
     display_goto_xy(1, 0);
-    display_string("PGAIN");
-    display_int(local_pgain,4);
+    display_string("PGAIN_LOW");
+    display_int(local_pgain_low,4);
     display_goto_xy(1, 1);
+    display_string("PGAIN_HIGH");
+    display_int(local_pgain_high,4);
+    display_goto_xy(1, 2);
     display_string("DGAIN");
     display_int(local_dgain,4);
-    if(state == 0)
-      display_goto_xy(0,0);
-    else
-      display_goto_xy(0,1);
+    display_goto_xy(0,state);
     display_string(">");
     display_update();
     
     btn = get_btn();
     switch (btn) {
     case Obtn:	// オレンジボタン == 決定
-      if (state == 0){
-	state = 1;
-	pgain = local_pgain;
-	continue;
-      }
+      if (state == 0)
+	pgain_low = local_pgain_low;
+      else if(state == 1)
+	pgain_high = local_pgain_high;
       else{
 	dgain = local_dgain;
-	break;
+	return;
       }
+      state++;
+      continue;
     case Cbtn:	// グレーボタン 何もしない
 	continue;
     case Rbtn:	// 右ボタン == プラス
       if(state == 0)
-	local_pgain++;
+	local_pgain_low++;
+      else if(state == 1)
+	local_pgain_high++;
       else
 	local_dgain++;
       continue;
     case Lbtn:	// 左ボタン == マイナス
       if(state == 0)
-	local_pgain--;
+	local_pgain_low--;
+      else if(state == 1)
+	local_pgain_high--;
       else
 	local_dgain--;
       continue;
     default:	// 複数が押されている場合
       continue;
     }
-    break;
   }
 }
 
@@ -376,34 +378,32 @@ algorithm_dual(void)
       
     int lmid=llow+(lhigh-llow)/2;
     int cmid=clow+(chigh-clow)/2;
-    int lval_dif = 100 * (lval - lval_prev) / (lhigh-lmid);
-    int cval_dif = 100 * (cval - cval_prev) / (chigh-cmid);
-    int pgain=PGAIN_HIGH;
+    int lval_dif = 100 * (lval - lval_prev) / (lhigh-llow);
+    int cval_dif = 100 * (cval - cval_prev) / (chigh-clow);
+    int pgain=pgain_high;
     int is_straight=0;
     if(lval - lval_prev < STRAIGHT && lval - lval_prev > -STRAIGHT){
       if(cval - cval_prev < STRAIGHT && cval - cval_prev > -STRAIGHT){
-	lval_dif=0;
-	cval_dif=0;
-	pgain=PGAIN_LOW;
-	is_straight=1;
+	pgain=pgain_low;
       }
     }
     /*
       分数のところの説明
       分子：現在の値が中央値からどれだけずれているか
-      分母：中央から端っこまでの距離の絶対値
+      分母：端っこから端っこまでの距離の絶対値
     */
-    int lturn = pgain * 100 * (lval - lmid)/(lhigh - lmid) + DGAIN * lval_dif;
-    int cturn = pgain * 100 * (cval - cmid)/(chigh - cmid) + DGAIN * cval_dif;
-    lval_prev = lval;
-    cval_prev = cval;
+    int lturn = pgain * 100 * (lval - lmid)/(lhigh - llow) + DGAIN * lval_dif;
+    int cturn = pgain * 100 * (cval - cmid)/(chigh - clow) + DGAIN * cval_dif;
+    lturn /= 2;
+    cturn /= 2;    
     if(lturn < -HIGHPOWER)
       lturn = -HIGHPOWER;
     if(cturn < -HIGHPOWER)
       cturn = -HIGHPOWER;
-    
+    lval_prev = lval;
+    cval_prev = cval;
     dbg1=is_straight;
-    dbg2=cval_dif;
+    dbg2=0;
     motor_set_speed(Lmotor, HIGHPOWER+lturn, 1);
     motor_set_speed(Rmotor, HIGHPOWER+cturn, 1);
   }
@@ -429,21 +429,94 @@ jouga_straight(void)
     PLAN:
     左右同じ速度でモータが回転してほしいので、左右同じ速度になるように計測、パワーを補正する
     モータの回転速度は何度モータが回転したかでわかるはず　それが左右同じになるパワーを探す
+    参考：教科書pp15〜16あたり　モータの部分
   */
-  //モータの回転角保存用変数
-  int R_count;
-  int L_count;
-  //一応速度を初期化：
-  motor_set_speed(Rmotor, HIGHPOWER, 1);
-  motor_set_speed(Lmotor, HIGHPOWER, 1);
-  for(;;){
-    R_count=nxt_motor_get_count(Rmotor);
-    L_count=nxt_motor_get_count(Lmotor);
-    //dly_tsk(4000);	// 1500mm進むまで待つ
+  
+  /*めも
+   *ラインが無くなったら
+   *次にラインが現れるまでそのまままっすぐ進ませる．
+   *再びラインを検知したら9cmだけ進み，その後停止．
+
+   *ラインがあるところではライントレース
+   *右モータと左モータの回転角？が一致するときのパワーを記憶
+   *記憶したパワー？？でラインのないところを走る．
+   *再びラインを認識したとき，機体を止める．
+   */
+
+  /*****プログラム******/
+
+  /*回転角についてはちょっとよくわからなかったので使ってないです*/
+
+  //モータのスピードを保存しておく変数
+  int L_speed;  
+  int R_speed;
+  int lmid=llow+(lhigh-llow)/2;
+  int cmid=clow+(chigh-clow)/2;
+	
+  //左右のモータのスピードが等しくなった時の値を保存する変数
+  //とりあえず初期値としてHIGHPOWERを入れておく
+  int equal_speed　HIGHPOWER;
+
+  /***ライン上を走るとき***/
+  for (;;) {
+    //白黒値を取得 
+    lval = get_light_sensor(Light);
+    cval = get_light_sensor(Color);
+
+    //P制御でライントレースしてるだけ
+    //できたらだんだんラインからのずれが少なくなるようにしたい(微分制御？)
+    int lturn = pgain_low * 100 * (lval - lmid) / (lhigh - llow);
+    int cturn = pgain_low * 100 * (cval - cmid) / (chigh - clow);
+    lturn /= 2;
+    cturn /= 2;    
+    if (lturn < -HIGHPOWER)
+      lturn = -HIGHPOWER;
+    if (cturn < -HIGHPOWER)
+      cturn = -HIGHPOWER;
+    
+    L_speed = HIGHPOWER + lturn;
+    R_speed = HIGHPOWER + cturn;
+
+    //右と左のモータのスピードが等しいとき，その値を保存する
+    //意味があるのかわからない
+    if (L_speed == R_speed) {
+      equal_speed = L_speed;
+    }
+
+    motor_set_speed(Lmotor, L_speed, 1);
+    motor_set_speed(Rmotor, R_speed, 1);
+
+    /***ラインが途絶えたらこのforループを抜ける***/
+    if (lval > (lhigh + llow) / 2 && cval > (chigh + clow) / 2)
+      //ライトもカラーも白を検知したとき
+      {
+	break;
+      }
   }
-  // モータの停止
-  motor_set_speed(Rmotor, 0, 0);
-  motor_set_speed(Lmotor, 0, 0);
+
+  /***ラインが途絶えたあと***/
+
+  for(;;){
+
+    if(lval < (lhigh + llow) / 2){ //黒を見つけたら9cm進んで止まる
+      dly_tsk(240);//90mm進む(9cm)
+      // モータの停止
+      motor_set_speed(Rmotor, 0, 0);
+      motor_set_speed(Lmotor, 0, 0);
+      break;
+
+    }else{
+		
+      motor_set_speed(Rmotor, equal_speed, 1);
+      motor_set_speed(Lmotor, equal_speed, 1);
+
+    }
+
+    /*****ここまで******/
+    //dly_tsk(4000);	// 1500mm進むまで待つ
+    // モータの停止
+    motor_set_speed(Rmotor, 0, 0);
+    motor_set_speed(Lmotor, 0, 0);
 }
 
 /*
