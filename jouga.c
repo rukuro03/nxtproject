@@ -447,76 +447,73 @@ jouga_straight(void)
 
   /*回転角についてはちょっとよくわからなかったので使ってないです*/
 
-  //モータのスピードを保存しておく変数
-  int L_speed;  
-  int R_speed;
+  /*
+    10/22　方針
+    ラインは黒白だけ判断して途切れるかどうかだけ考える
+    ライン上では早い方のモータに与えるパワーを下げることを繰り返してみる
+    直線を走って黒を見つけたら900mmはしって停止する
+  */
+  int L=10;//一回のループの間に何度までならずれていてよいか(度)
+  int lval,cval,R_rot,L_rot;
+  int R_pow=LOW_POWER,L_pow=LOW_POWER;//実際に与えるパワー
+  int Wheel_radius=30;//タイヤの半径(mm)　今は適当です
+  int Wheel_circum=Wheel_radius*2*3.14;//タイヤの円周の長さ(mm)
   int lmid=llow+(lhigh-llow)/2;
   int cmid=clow+(chigh-clow)/2;
-	
-  //左右のモータのスピードが等しくなった時の値を保存する変数
-  //とりあえず初期値としてHIGHPOWERを入れておく
-  int equal_speed　HIGHPOWER;
-
-  /***ライン上を走るとき***/
+  int state=0;//黒をみつけたか
   for (;;) {
-    //白黒値を取得 
+    /***ライン上を走るとき***/
+    //白黒値を取得
+    wai_sem(Stskc);// セマフォを待つことで定期的な実行を実現
     lval = get_light_sensor(Light);
     cval = get_light_sensor(Color);
-
-    //P制御でライントレースしてるだけ
-    //できたらだんだんラインからのずれが少なくなるようにしたい(微分制御？)
-    int lturn = pgain_low * 100 * (lval - lmid) / (lhigh - llow);
-    int cturn = pgain_low * 100 * (cval - cmid) / (chigh - clow);
-    lturn /= 2;
-    cturn /= 2;    
-    if (lturn < -HIGHPOWER)
-      lturn = -HIGHPOWER;
-    if (cturn < -HIGHPOWER)
-      cturn = -HIGHPOWER;
-    
-    L_speed = HIGHPOWER + lturn;
-    R_speed = HIGHPOWER + cturn;
-
-    //右と左のモータのスピードが等しいとき，その値を保存する
-    //意味があるのかわからない
-    if (L_speed == R_speed) {
-      equal_speed = L_speed;
+    R_rot=nxt_motor_get_count(R_motor);
+    L_rot=nxt_motor_get_count(L_motor);
+    //早い方のモータにかけるパワーを小さくする
+    if(R_rot-Lrot > L){
+      R_speed-=L*(double)R_rot/L_rot;
+    }
+    if(L_rot-Rrot > L){
+      L_speed-=L*(double)L_rot/R_rot;
     }
 
-    motor_set_speed(Lmotor, L_speed, 1);
-    motor_set_speed(Rmotor, R_speed, 1);
+    nxt_motor_set_count(R_motor,0);//カウントの初期化
+    nxt_motor_set_count(L_motor,0);
+    
+    motor_set_speed(Rmotor, R_pow, 1);
+    motor_set_speed(Lmotor, L_pow, 1);
 
     /***ラインが途絶えたらこのforループを抜ける***/
-    if (lval > (lhigh + llow) / 2 && cval > (chigh + clow) / 2)
+    if (lval < lmid && cval < cmid){
       //ライトもカラーも白を検知したとき
-      {
 	break;
-      }
+    }
   }
-
+  //ここまででまっすぐ進めるようになっていてほしい
   /***ラインが途絶えたあと***/
 
   for(;;){
-
-    if(lval < (lhigh + llow) / 2){ //黒を見つけたら9cm進んで止まる
-      dly_tsk(240);//90mm進む(9cm)
-      // モータの停止
-      motor_set_speed(Rmotor, 0, 0);
-      motor_set_speed(Lmotor, 0, 0);
-      break;
-
-    }else{
-		
-      motor_set_speed(Rmotor, equal_speed, 1);
-      motor_set_speed(Lmotor, equal_speed, 1);
-
+    wai_sem(Stskc);// セマフォを待つことで定期的な実行を実現
+    lval = get_light_sensor(Light);
+    cval = get_light_sensor(Color);
+    if(state == 0){
+      //黒を見つけるまで
+      if(lval > lmid && cval > cmid){
+	state=1;
+	nxt_motor_set_count(R_motor,0);//カウントの初期化
+	nxt_motor_set_count(L_motor,0);
+      }
     }
-
-    /*****ここまで******/
-    //dly_tsk(4000);	// 1500mm進むまで待つ
-    // モータの停止
-    motor_set_speed(Rmotor, 0, 0);
-    motor_set_speed(Lmotor, 0, 0);
+    else{
+      //黒を見つけてから止まるまで 右のモータだけで計算する
+      R_rot=nxt_motor_get_count(R_motor);
+      if(Wheel_circum * (double)R_rot/360 < 900){
+	//円周x回転角度÷360=進んだ距離
+	//90mmで停止
+	motor_set_speed(Rmotor, 0, 1);
+	motor_set_speed(Lmotor, 0, 1);
+      }
+    }
 }
 
 /*
