@@ -384,6 +384,7 @@ algorithm_dual(void)
     int is_straight=0;
     if(lval - lval_prev < STRAIGHT && lval - lval_prev > -STRAIGHT){
       if(cval - cval_prev < STRAIGHT && cval - cval_prev > -STRAIGHT){
+	midi_play(440,1,60,0,0);//わからんがAの音を一瞬出したい...だめ？
 	pgain=pgain_low;
       }
     }
@@ -408,6 +409,7 @@ algorithm_dual(void)
     motor_set_speed(Rmotor, HIGHPOWER+cturn, 1);
   }
 }
+
 
 /*
  * ペナルティ計測用の関数
@@ -457,28 +459,28 @@ jouga_straight(void)
   int lval,cval,R_rot,L_rot;
   int R_pow=LOW_POWER,L_pow=LOW_POWER;//実際に与えるパワー
   int Wheel_radius=30;//タイヤの半径(mm)　今は適当です
-  int Wheel_circum=Wheel_radius*2*3.14;//タイヤの円周の長さ(mm)
+  double Wheel_circum=Wheel_radius*2*3.14;//タイヤの円周の長さ(mm)
   int lmid=llow+(lhigh-llow)/2;
   int cmid=clow+(chigh-clow)/2;
   int state=0;//黒をみつけたか
   for (;;) {
     /***ライン上を走るとき***/
     //白黒値を取得
-    wai_sem(Stskc);// セマフォを待つことで定期的な実行を実現
-    lval = get_light_sensor(Light);
-    cval = get_light_sensor(Color);
-    R_rot=nxt_motor_get_count(R_motor);
-    L_rot=nxt_motor_get_count(L_motor);
-    //早い方のモータにかけるパワーを小さくする
-    if(R_rot-Lrot > L){
-      R_speed-=L*(double)R_rot/L_rot;
-    }
-    if(L_rot-Rrot > L){
-      L_speed-=L*(double)L_rot/R_rot;
-    }
-
+    //wai_sem(Stskc);// セマフォを待つことで定期的な実行を実現
+    dly_tsk(10);//一応10フレーム待機　わからん
     nxt_motor_set_count(R_motor,0);//カウントの初期化
     nxt_motor_set_count(L_motor,0);
+    R_rot=nxt_motor_get_count(R_motor);
+    L_rot=nxt_motor_get_count(L_motor);
+    lval = get_light_sensor(Light);
+    cval = get_light_sensor(Color);
+    //早い方のモータにかけるパワーを小さくする
+    if(R_rot-Lrot > L){
+      R_pow--;
+    }
+    if(L_rot-Rrot > L){
+      L_pow--;
+    }
     
     motor_set_speed(Rmotor, R_pow, 1);
     motor_set_speed(Lmotor, L_pow, 1);
@@ -507,7 +509,7 @@ jouga_straight(void)
     else{
       //黒を見つけてから止まるまで 右のモータだけで計算する
       R_rot=nxt_motor_get_count(R_motor);
-      if(Wheel_circum * (double)R_rot/360 < 900){
+      if(Wheel_circum * R_rot/360 < 90){
 	//円周x回転角度÷360=進んだ距離
 	//90mmで停止
 	motor_set_speed(Rmotor, 0, 1);
@@ -515,13 +517,13 @@ jouga_straight(void)
       }
     }
 }
-
+  
 /*
  * TASK: InitTsk
  *	初期設定を行うタスク
  */
 void
-InitTsk(VP_INT exinf)
+  InitTsk(VP_INT exinf)
 {
   display_clear(0);	// なにはともあれ、画面をクリア
   display_goto_xy(2, 3);
