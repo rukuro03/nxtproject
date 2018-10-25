@@ -9,14 +9,13 @@
 
 
 # Target specific macros
-CUSTOM_SRC=custom_src/
 TARGET = jouga
 TARGET_SOURCES = \
-	$(CUSTOM_SRC)jouga.c \
+	jouga.c \
 	music.c button.c display.c graphics.c
 TOPPERS_JSP_CFG_SOURCE = ./jouga.cfg
 TARGET_HEADERS = \
-	$(CUSTOM_SRC)jouga.h \
+	jouga.h \
 	jouga_cfg.h music.h button.h display.h graphics.h
 FIRMWARE = c:/cygwin/nexttool/lms_arm_nbcnxc_128.rfw
 

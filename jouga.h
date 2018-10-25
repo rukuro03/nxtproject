@@ -16,8 +16,8 @@ int get_light_sensor(int);
 // 一番最初のプログラム変更はおそらくこれらの値の変更
 #define	LOWVAL (470)
 #define	HIGHVAL (640)
-#define LOWPOWER (50)
-#define HIGHPOWER (50)
+#define LOWPOWER (20)
+#define HIGHPOWER (30)
 
 #ifndef _MACRO_ONLY
 // ポートに関する定数値を列挙型として登録

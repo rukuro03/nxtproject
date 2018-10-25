@@ -33,6 +33,8 @@ void jouga_dual(void);
 void algorithm_light(void);
 void algorithm_color(void);
 void algorithm_dual(void);
+void algorithm_straight(void);
+void algorithm_straight2(void);
 void jouga_straight(void);
 
 /* 外部変数の定義 */
@@ -40,7 +42,7 @@ char name[17];
 int lval, cval;
 int llow = LOWVAL, lhigh = HIGHVAL;
 int clow = LOWVAL, chigh = HIGHVAL;
-int pgain_low=3,pgain_high=5,dgain=3;
+int pgain_low=2,pgain_high=5,dgain=3;
 int dbg1, dbg2;//デバッグ用の変数
 void (*jouga_algorithm)(void) = algorithm_dual;	// デフォルトの設定
 
@@ -55,6 +57,7 @@ NameFunc MainMenu[] = {
   {"Exit", ecrobot_restart_NXT},	// OSの制御に戻る
 //  {"Power Off", ecrobot_shutdown_NXT},	// 電源を切る
 };
+
 
 /* ライトセンサーやカラーセンサーの値を0-1023で読み込む(小さいほど暗い) */
 int
@@ -176,7 +179,7 @@ sync_motor(){
   */
 
   int pow=0,sum=0;
-  int i,pos;
+  int i;
   int ldat[10]={0};
   int rdat[10]={0};
   nxtButton btn;
@@ -197,9 +200,9 @@ sync_motor(){
     motor_set_speed(Lmotor, pow, 1);
     nxt_motor_set_count(Rmotor, 0);//回転角初期化？
     nxt_motor_set_count(Lmotor, 0);
-    dly_tsk(500);//0.5s待機
-    rdat[i]=nxt_motor_get_count(Rmotor)/50;//回転角度取得
-    ldat[i]=nxt_motor_get_count(Lmotor)/50;
+    dly_tsk(1000);//1s待機
+    rdat[i]=nxt_motor_get_count(Rmotor);//回転角度取得
+    ldat[i]=nxt_motor_get_count(Lmotor);
     //回転速度表示
     display_string(" ");
     display_int(ldat[i],4);
@@ -239,6 +242,8 @@ sync_motor(){
   do{
     btn = get_btn();
   }while(btn != Obtn);
+  motor_set_speed(Rmotor, 0, 1);
+  motor_set_speed(Lmotor, 0, 1);
 }
 
 void
@@ -247,6 +252,7 @@ setting_func(){//ゲイン設定用変数
   int local_pgain_low=pgain_low;
   int local_pgain_high=pgain_high;
   int local_dgain=dgain;
+  nxtButton btn;
   for(;;){
     display_clear(0);
     display_goto_xy(1, 0);
@@ -308,7 +314,10 @@ setting_func(){//ゲイン設定用変数
 void
 jouga_dual(void)
 {
-	jouga_algorithm = algorithm_dual;
+  jouga_algorithm = algorithm_dual;
+}
+void jouga_straight(void){
+  jouga_algorithm=algorithm_straight2;
 }
 
 
@@ -384,7 +393,7 @@ algorithm_dual(void)
     int is_straight=0;
     if(lval - lval_prev < STRAIGHT && lval - lval_prev > -STRAIGHT){
       if(cval - cval_prev < STRAIGHT && cval - cval_prev > -STRAIGHT){
-	midi_play(440,1,60,0,0);//わからんがAの音を一瞬出したい...だめ？
+	//midi_play(440,1,60,0,0);//わからんがAの音を一瞬出したい...だめ？
 	pgain=pgain_low;
       }
     }
@@ -393,8 +402,8 @@ algorithm_dual(void)
       分子：現在の値が中央値からどれだけずれているか
       分母：端っこから端っこまでの距離の絶対値
     */
-    int lturn = pgain * 100 * (lval - lmid)/(lhigh - llow) + DGAIN * lval_dif;
-    int cturn = pgain * 100 * (cval - cmid)/(chigh - clow) + DGAIN * cval_dif;
+    int lturn = pgain * 100 * (lval - lmid)/(lhigh - llow) + dgain * lval_dif;
+    int cturn = pgain * 100 * (cval - cmid)/(chigh - clow) + dgain * cval_dif;
     lturn /= 2;
     cturn /= 2;    
     if(lturn < -HIGHPOWER)
@@ -405,8 +414,10 @@ algorithm_dual(void)
     cval_prev = cval;
     dbg1=is_straight;
     dbg2=0;
-    motor_set_speed(Lmotor, HIGHPOWER+lturn, 1);
-    motor_set_speed(Rmotor, HIGHPOWER+cturn, 1);
+    //ライトセンサ:右 カラーセンサ：左
+    //3がライト　4がカラー
+    motor_set_speed(Rmotor, HIGHPOWER+lturn, 1);
+    motor_set_speed(Lmotor, HIGHPOWER+cturn, 1);
   }
 }
 
@@ -415,8 +426,134 @@ algorithm_dual(void)
  * ペナルティ計測用の関数
  *	直進して1500mm進んで止まるだけ
  */
+
 void
-jouga_straight(void)
+algorithm_straight2(void){
+  //モータのパワーを保存しておく変数
+  int L_pow = LOWPOWER;  
+  int R_pow = LOWPOWER;
+  int lval_prev=0,cval_prev=0;
+  int lmid = llow + (lhigh - llow) / 2;
+  int cmid = clow + (chigh - clow) / 2;
+  int R_rot, L_rot;//回転数を保存する変数
+  int Wheel_radius = 30;//タイヤの半径(mm)
+  int Wheel_circum = Wheel_radius * 2 * 3.14;//タイヤの円周の長さ(mm)
+  int PowerArray[20][2];//パワーの保存
+  //左右のモータのスピードが等しくなった時のパワーを保存する変数
+  //とりあえず初期値としてLOWPOWERを入れておく
+  int L_equal_pow = LOWPOWER;
+  int R_equal_pow = LOWPOWER;
+  int count=0,pow_count=0;
+  int pow_count_max=20;
+
+  //最初に0.2s加速
+  motor_set_speed(Lmotor,20, 1);
+  motor_set_speed(Rmotor, 20, 1);
+  dly_tsk(300); 
+  motor_set_speed(Lmotor,30, 1);
+  motor_set_speed(Rmotor, 30, 1);
+  dly_tsk(300);
+  motor_set_speed(Lmotor,40, 1);
+  motor_set_speed(Rmotor, 40, 1);
+  dly_tsk(300);
+  nxt_motor_set_count(Rmotor, 0);//カウントの初期化
+  nxt_motor_set_count(Lmotor, 0);
+  /***ライン上を走るとき***/
+  for (;;) {
+    wai_sem(Stskc);
+    //白黒値を取得 
+    lval = get_light_sensor(Light);
+    cval = get_light_sensor(Color);
+    //取得した値がカリブレーションしたときより大きくなることもありうる
+    if(lval < llow)
+      llow = lval;
+    else if(lval > lhigh)
+      lhigh = lval;
+    if(cval < clow)
+      clow = cval;
+    else if(cval > chigh)
+      chigh = cval;
+    int lval_dif = 100 * (lval - lval_prev) / (lhigh-llow);
+    int cval_dif = 100 * (cval - cval_prev) / (chigh-clow);
+    int pgain=2;
+    /*
+      分数のところの説明
+      分子：現在の値が中央値からどれだけずれているか
+      分母：端っこから端っこまでの距離の絶対値
+    */
+    int lturn = pgain * 100 * (lval - lmid)/(lhigh - llow) + dgain * lval_dif;
+    int cturn = pgain * 100 * (cval - cmid)/(chigh - clow) + dgain * cval_dif;
+    lturn /= 2;
+    cturn /= 2;    
+    if(lturn < -LOWPOWER)
+      lturn = -LOWPOWER;
+    if(cturn < -LOWPOWER)
+      cturn = -LOWPOWER;
+    lval_prev = lval;
+    cval_prev = cval;
+
+    //回転数を取得
+    R_rot = nxt_motor_get_count(Rmotor);
+
+    R_pow = LOWPOWER + lturn;
+    L_pow = LOWPOWER + cturn;
+    dbg1=1;
+    dbg2=2;
+    motor_set_speed(Lmotor, L_pow, 1);
+    motor_set_speed(Rmotor, R_pow, 1);
+    PowerArray[pow_count][0]=L_pow;
+    PowerArray[pow_count][1]=R_pow;
+    if(pow_count<pow_count_max)
+      pow_count++;
+    else
+      pow_count=0;
+    /***ラインが途絶えたらこのforループを抜ける***/
+    if (Wheel_circum * (double)R_rot / 360 > 850)
+      break;
+  }
+
+  /***ラインが途絶えたあと***/
+  pow_count=0;
+  for(;;){
+    wai_sem(Stskc);
+    lval = get_light_sensor(Light);
+    cval = get_light_sensor(Color);
+    dbg1=2;
+    dbg2=1;
+
+    if(lval < lmid || cval < cmid){ //黒を見つけたら9cm進んで止まる
+      break;
+
+    }else{
+      motor_set_speed(Lmotor, PowerArray[pow_count][0], 1);
+      motor_set_speed(Rmotor, PowerArray[pow_count][1], 1);
+      if(pow_count<pow_count_max)
+	pow_count++;
+      else
+	pow_count=0;
+    }
+  } 
+  nxt_motor_set_count(Rmotor, 0);//カウントの初期化
+  nxt_motor_set_count(Lmotor, 0);
+  for(;;){
+    //回転数を計測
+    wai_sem(Stskc);
+    dbg1=3;
+    dbg2=1;
+    R_rot = nxt_motor_get_count(Rmotor);
+    //90mm進む(9cm)
+    if (Wheel_circum * (double)R_rot / 360 > 90) {
+      //円周x回転角度÷360=進んだ距離
+      // モータの停止
+      motor_set_speed(Rmotor, 0, 0);
+      motor_set_speed(Lmotor, 0, 0);
+      break;
+    }
+  }
+}
+
+void
+algorithm_straight(void)
 {
   //##SEARCHSTRAIGHT
 
@@ -455,40 +592,42 @@ jouga_straight(void)
     ライン上では早い方のモータに与えるパワーを下げることを繰り返してみる
     直線を走って黒を見つけたら900mmはしって停止する
   */
-  int L=10;//一回のループの間に何度までならずれていてよいか(度)
-  int lval,cval,R_rot,L_rot;
-  int R_pow=LOW_POWER,L_pow=LOW_POWER;//実際に与えるパワー
-  int Wheel_radius=30;//タイヤの半径(mm)　今は適当です
+  int L=0;//一回のループの間に何度までならずれていてよいか(度)
+  int lval,cval,R_rot=0,L_rot=0;
+  int R_pow=50,L_pow=50;//実際に与えるパワー
+  int Wheel_radius=28;//タイヤの半径(mm)　今は適当です
   double Wheel_circum=Wheel_radius*2*3.14;//タイヤの円周の長さ(mm)
   int lmid=llow+(lhigh-llow)/2;
   int cmid=clow+(chigh-clow)/2;
   int state=0;//黒をみつけたか
+  nxt_motor_set_count(Rmotor,0);//カウントの初期化
+  nxt_motor_set_count(Lmotor,0);
   for (;;) {
     /***ライン上を走るとき***/
     //白黒値を取得
     //wai_sem(Stskc);// セマフォを待つことで定期的な実行を実現
-    dly_tsk(10);//一応10フレーム待機　わからん
-    nxt_motor_set_count(R_motor,0);//カウントの初期化
-    nxt_motor_set_count(L_motor,0);
-    R_rot=nxt_motor_get_count(R_motor);
-    L_rot=nxt_motor_get_count(L_motor);
+    dly_tsk(100);//一応0.1s待機　わからん
+    R_rot=nxt_motor_get_count(Rmotor)-R_rot;
+    L_rot=nxt_motor_get_count(Lmotor)-L_rot;
     lval = get_light_sensor(Light);
     cval = get_light_sensor(Color);
-    //早い方のモータにかけるパワーを小さくする
-    if(R_rot-Lrot > L){
-      R_pow--;
+
+    if(R_rot-L_rot > L){
+      L_pow++;
     }
-    if(L_rot-Rrot > L){
+    else if(L_rot-R_rot > L){
       L_pow--;
     }
-    
+
+    dbg1=R_pow;
+    dbg2=L_pow;
     motor_set_speed(Rmotor, R_pow, 1);
     motor_set_speed(Lmotor, L_pow, 1);
 
     /***ラインが途絶えたらこのforループを抜ける***/
-    if (lval < lmid && cval < cmid){
+    if (lval > lmid && cval > cmid){
       //ライトもカラーも白を検知したとき
-	break;
+      break;
     }
   }
   //ここまででまっすぐ進めるようになっていてほしい
@@ -500,15 +639,15 @@ jouga_straight(void)
     cval = get_light_sensor(Color);
     if(state == 0){
       //黒を見つけるまで
-      if(lval > lmid && cval > cmid){
+      if(lval < lmid && cval < cmid){
 	state=1;
-	nxt_motor_set_count(R_motor,0);//カウントの初期化
-	nxt_motor_set_count(L_motor,0);
+	nxt_motor_set_count(Rmotor,0);//カウントの初期化
+	nxt_motor_set_count(Lmotor,0);
       }
     }
     else{
       //黒を見つけてから止まるまで 右のモータだけで計算する
-      R_rot=nxt_motor_get_count(R_motor);
+      R_rot=nxt_motor_get_count(Rmotor);
       if(Wheel_circum * R_rot/360 < 90){
 	//円周x回転角度÷360=進んだ距離
 	//90mmで停止
@@ -516,8 +655,8 @@ jouga_straight(void)
 	motor_set_speed(Lmotor, 0, 1);
       }
     }
+  }
 }
-  
 /*
  * TASK: InitTsk
  *	初期設定を行うタスク
@@ -591,7 +730,7 @@ MuscTsk(VP_INT exinf)
 {
   // 延々と大学歌を奏で続ける
   for (;;) {
-    play_notes(TIMING_chiba_univ, 8, chiba_univ);
+    play_notes(TIMING_chiba_univ, 8, e_p);
   }
 }
 
