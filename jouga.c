@@ -33,7 +33,6 @@ void jouga_dual(void);
 void algorithm_light(void);
 void algorithm_color(void);
 void algorithm_dual(void);
-void algorithm_straight(void);
 void algorithm_straight2(void);
 void jouga_straight(void);
 
@@ -42,6 +41,7 @@ char name[17];
 int lval, cval;
 int llow = LOWVAL, lhigh = HIGHVAL;
 int clow = LOWVAL, chigh = HIGHVAL;
+int highpower=50;
 int pgain_low=2,pgain_high=5,dgain=3;
 int dbg1, dbg2;//デバッグ用の変数
 void (*jouga_algorithm)(void) = algorithm_dual;	// デフォルトの設定
@@ -184,7 +184,7 @@ sync_motor(){
   int rdat[10]={0};
   nxtButton btn;
   for(i=0;i<10;i++){
-    //パワーを上げながら値(度/10ミリ秒)を取得していきます
+    //パワーを上げながら値(度)を取得していきます
     pow = i*10;
     //わかってる値を表示
     display_clear(0);
@@ -248,10 +248,19 @@ sync_motor(){
 
 void
 setting_func(){//ゲイン設定用変数
-  int state=0;
+  /*
+    使い方：
+    1.右左ボタンで設定したい変数を選ぶ
+    2.オレンジボタンを押すと設定モードに切り替わる
+    3.右左ボタンで値を変更
+    4.オレンジボタンを押すと決定 
+  */
+  int state=0,pos=0;//state:0=変更値選択,1=値設定 pos:現在の選択位置
   int local_pgain_low=pgain_low;
   int local_pgain_high=pgain_high;
   int local_dgain=dgain;
+  int local_highpower=highpower;
+  int max_column=5;//行数
   nxtButton btn;
   for(;;){
     display_clear(0);
@@ -264,40 +273,103 @@ setting_func(){//ゲイン設定用変数
     display_goto_xy(1, 2);
     display_string("DGAIN");
     display_int(local_dgain,4);
-    display_goto_xy(0,state);
+    display_goto_xy(1, 3);
+    display_string("HIGHPOWER");
+    display_int(local_highpower,4);
+    display_goto_xy(1, 4);
+    display_string("END");
+    display_goto_xy(0,pos);//現在位置のカーソル表示
     display_string(">");
     display_update();
-    
+    /*
+      画面は
+      >PGAIN_LOW
+       PGAIN_HIGH
+       DGAIN
+       HIGHPOWER
+       END
+       みたいな表示
+     */    
     btn = get_btn();
     switch (btn) {
     case Obtn:	// オレンジボタン == 決定
-      if (state == 0)
-	pgain_low = local_pgain_low;
-      else if(state == 1)
-	pgain_high = local_pgain_high;
-      else{
-	dgain = local_dgain;
-	return;
+      if (state == 0 ){//位置選択中
+	if(pos!=4)//ENDの位置に無い
+	  state=1;
+	else
+	  return;
       }
-      state++;
+      else {//設定中　値を適用
+	state=0;//位置選択中に戻る
+	switch(pos){
+	case 0://PGAIN_LOW
+	  pgain_low=local_pgain_low;
+	  break;
+	case 1://PGAIN_HIGH
+	  pgain_high=local_pgain_high;
+	  break;
+	case 2://DGAIN
+	  dgain=local_dgain;
+	  break;
+	case 3://HIGHPOWER
+	  highpower=local_highpower;
+	  break;
+	default://ENDのとこ？エラーだべ・一応抜けとく
+	  return;
+	}
+      }
       continue;
-    case Cbtn:	// グレーボタン 何もしない
-	continue;
-    case Rbtn:	// 右ボタン == プラス
-      if(state == 0)
-	local_pgain_low++;
-      else if(state == 1)
-	local_pgain_high++;
-      else
-	local_dgain++;
+    case Cbtn:	// グレーボタン 終了/何もしない
+      if(state==0)
+	return;
       continue;
-    case Lbtn:	// 左ボタン == マイナス
-      if(state == 0)
-	local_pgain_low--;
-      else if(state == 1)
-	local_pgain_high--;
-      else
-	local_dgain--;
+    case Rbtn:	// 右ボタン 下に移動/値プラス
+      if(state == 0){
+	if(pos<max_column)
+	  pos++;
+      }
+      else{
+	switch(pos){
+	case 0://PGAIN_LOW
+	  local_pgain_low++;
+	  break;
+	case 1://PGAIN_HIGH
+	  local_pgain_high++;
+	  break;
+	case 2://DGAIN
+	  local_dgain++;
+	  break;
+	case 3://HIGHPOWER
+	  local_highpower++;
+	  break;
+	default://END 何もしない
+	  break;
+	}
+      }
+      continue;
+    case Lbtn:	// 左ボタン 上に移動/値マイナス
+      if(state == 0){
+	if(pos>0)
+	  pos--;
+      }
+      else{
+	switch(pos){
+	case 0://PGAIN_LOW
+	  local_pgain_low--;
+	  break;
+	case 1://PGAIN_HIGH
+	  local_pgain_high--;
+	  break;
+	case 2://DGAIN
+	  local_dgain--;
+	  break;
+	case 3://HIGHPOWER
+	  local_highpower--;
+	  break;
+	default://END 何もしない
+	  break;
+	}
+      }
       continue;
     default:	// 複数が押されている場合
       continue;
@@ -393,7 +465,6 @@ algorithm_dual(void)
     int is_straight=0;
     if(lval - lval_prev < STRAIGHT && lval - lval_prev > -STRAIGHT){
       if(cval - cval_prev < STRAIGHT && cval - cval_prev > -STRAIGHT){
-	//midi_play(440,1,60,0,0);//わからんがAの音を一瞬出したい...だめ？
 	pgain=pgain_low;
       }
     }
@@ -406,18 +477,18 @@ algorithm_dual(void)
     int cturn = pgain * 100 * (cval - cmid)/(chigh - clow) + dgain * cval_dif;
     lturn /= 2;
     cturn /= 2;    
-    if(lturn < -HIGHPOWER)
-      lturn = -HIGHPOWER;
-    if(cturn < -HIGHPOWER)
-      cturn = -HIGHPOWER;
+    if(lturn < -highpower)
+      lturn = -highpower;
+    if(cturn < -highpower)
+      cturn = -highpower;
     lval_prev = lval;
     cval_prev = cval;
     dbg1=is_straight;
     dbg2=0;
     //ライトセンサ:右 カラーセンサ：左
     //3がライト　4がカラー
-    motor_set_speed(Rmotor, HIGHPOWER+lturn, 1);
-    motor_set_speed(Lmotor, HIGHPOWER+cturn, 1);
+    motor_set_speed(Rmotor, highpower+lturn, 1);
+    motor_set_speed(Lmotor, highpower+cturn, 1);
   }
 }
 
@@ -552,111 +623,6 @@ algorithm_straight2(void){
   }
 }
 
-void
-algorithm_straight(void)
-{
-  //##SEARCHSTRAIGHT
-
-  /*
-    BACKGROUND:
-    左右同じパワーを与えてもモータが同じ速度で回転するわけではない
-    パワーだけで(motor_set_speedに与える引数だけで)考えるとまっすぐ進まなくなる
-    …らしい
-    てことはライントレースもそれを考えたらいいのか？わからないが少なくともペナルティは
-    直線コースであることが確かなので直線がしっかり走れるようなプログラムが必要
-    
-    PLAN:
-    左右同じ速度でモータが回転してほしいので、左右同じ速度になるように計測、パワーを補正する
-    モータの回転速度は何度モータが回転したかでわかるはず　それが左右同じになるパワーを探す
-    参考：教科書pp15〜16あたり　モータの部分
-  */
-  
-  /*めも
-   *ラインが無くなったら
-   *次にラインが現れるまでそのまままっすぐ進ませる．
-   *再びラインを検知したら9cmだけ進み，その後停止．
-
-   *ラインがあるところではライントレース
-   *右モータと左モータの回転角？が一致するときのパワーを記憶
-   *記憶したパワー？？でラインのないところを走る．
-   *再びラインを認識したとき，機体を止める．
-   */
-
-  /*****プログラム******/
-
-  /*回転角についてはちょっとよくわからなかったので使ってないです*/
-
-  /*
-    10/22　方針
-    ラインは黒白だけ判断して途切れるかどうかだけ考える
-    ライン上では早い方のモータに与えるパワーを下げることを繰り返してみる
-    直線を走って黒を見つけたら900mmはしって停止する
-  */
-  int L=0;//一回のループの間に何度までならずれていてよいか(度)
-  int lval,cval,R_rot=0,L_rot=0;
-  int R_pow=50,L_pow=50;//実際に与えるパワー
-  int Wheel_radius=28;//タイヤの半径(mm)　今は適当です
-  double Wheel_circum=Wheel_radius*2*3.14;//タイヤの円周の長さ(mm)
-  int lmid=llow+(lhigh-llow)/2;
-  int cmid=clow+(chigh-clow)/2;
-  int state=0;//黒をみつけたか
-  nxt_motor_set_count(Rmotor,0);//カウントの初期化
-  nxt_motor_set_count(Lmotor,0);
-  for (;;) {
-    /***ライン上を走るとき***/
-    //白黒値を取得
-    //wai_sem(Stskc);// セマフォを待つことで定期的な実行を実現
-    dly_tsk(100);//一応0.1s待機　わからん
-    R_rot=nxt_motor_get_count(Rmotor)-R_rot;
-    L_rot=nxt_motor_get_count(Lmotor)-L_rot;
-    lval = get_light_sensor(Light);
-    cval = get_light_sensor(Color);
-
-    if(R_rot-L_rot > L){
-      L_pow++;
-    }
-    else if(L_rot-R_rot > L){
-      L_pow--;
-    }
-
-    dbg1=R_pow;
-    dbg2=L_pow;
-    motor_set_speed(Rmotor, R_pow, 1);
-    motor_set_speed(Lmotor, L_pow, 1);
-
-    /***ラインが途絶えたらこのforループを抜ける***/
-    if (lval > lmid && cval > cmid){
-      //ライトもカラーも白を検知したとき
-      break;
-    }
-  }
-  //ここまででまっすぐ進めるようになっていてほしい
-  /***ラインが途絶えたあと***/
-
-  for(;;){
-    wai_sem(Stskc);// セマフォを待つことで定期的な実行を実現
-    lval = get_light_sensor(Light);
-    cval = get_light_sensor(Color);
-    if(state == 0){
-      //黒を見つけるまで
-      if(lval < lmid && cval < cmid){
-	state=1;
-	nxt_motor_set_count(Rmotor,0);//カウントの初期化
-	nxt_motor_set_count(Lmotor,0);
-      }
-    }
-    else{
-      //黒を見つけてから止まるまで 右のモータだけで計算する
-      R_rot=nxt_motor_get_count(Rmotor);
-      if(Wheel_circum * R_rot/360 < 90){
-	//円周x回転角度÷360=進んだ距離
-	//90mmで停止
-	motor_set_speed(Rmotor, 0, 1);
-	motor_set_speed(Lmotor, 0, 1);
-      }
-    }
-  }
-}
 /*
  * TASK: InitTsk
  *	初期設定を行うタスク
