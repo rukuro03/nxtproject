@@ -17,6 +17,7 @@
 #define ARRAYSIZE(A)	(sizeof((A)) / sizeof((A)[0]))
 //1-4 x 3-3 x 3-10x 6-8
 #define STRAIGHT 50//まっすぐ走ってると認識する幅 
+
 /* 型や関数の宣言 */
 typedef void (*MFunc)(void);
 typedef struct _NameFunc {
@@ -27,9 +28,9 @@ typedef struct _NameFunc {
 void calibration_func(void);
 void sync_motor(void);
 void setting_func(void);
-void jouga_light(void);
-void jouga_color(void);
+void test_function(void);
 void jouga_dual(void);
+void algorithm_massuguma(void);
 void algorithm_light(void);
 void algorithm_color(void);
 void algorithm_dual(void);
@@ -41,16 +42,16 @@ char name[17];
 int lval, cval;
 int llow = LOWVAL, lhigh = HIGHVAL;
 int clow = LOWVAL, chigh = HIGHVAL;
-int highpower=50;
-int pgain_low=2,pgain_high=5,dgain=3;
+int highpower=10;
+int pgain_low=3,pgain_high=5,dgain=3;
 int dbg1, dbg2;//デバッグ用の変数
-void (*jouga_algorithm)(void) = algorithm_dual;	// デフォルトの設定
+void (*jouga_algorithm)(void) = algorithm_massuguma;	// デフォルトの設定
 
 NameFunc MainMenu[] = {
   {"Main Menu", NULL},
   {"Calibration", calibration_func},	// センサーのキャリブレーション
   {"Sync_Motor",sync_motor},            // モータの確認
-  {"Setting", setting_func},            // ゲイン等の設定を行う
+  {"Test_Function", test_function},            // ゲイン等の設定を行う
   {"Dual", jouga_dual},			// 2つを使うアルゴリズムを選択
   {"Start", NULL},			// ライントレースの開始
   {"Straight", jouga_straight},		// ペナルティ計測用
@@ -166,6 +167,10 @@ calibration_func(void)
   lhigh = lmax;
   clow = cmin;
   chigh = cmax;
+}
+
+void 
+test_function(){
 }
 
 void
@@ -399,38 +404,55 @@ void jouga_straight(void){
  *	周期タイマがセマフォを操作することで定期的に起動される
  *	ここを直すことで考えているアルゴリズムを実現できる
  */
-void
-algorithm_light(void)
-{
-  for(;;) {
-    wai_sem(Stskc);	// セマフォを待つことで定期的な実行を実現
-    lval = get_light_sensor(Light);
-    if (lval > (lhigh + llow) / 2) {		// 閾値より大きいとき
-      motor_set_speed(Rmotor, HIGHPOWER, 1);
-      motor_set_speed(Lmotor, LOWPOWER, 1);
-    } else {					// 閾値より小さいとき
-      motor_set_speed(Lmotor, HIGHPOWER, 1);
-      motor_set_speed(Rmotor, LOWPOWER, 1);
+
+/*
+移動用関数
+Moveは上二つを連続で呼ぶだけ
+*/
+void MotorPower(int pow){
+
+}
+void MotorSteer(int deg){
+}
+void Move(int pow,int deg,int length){
+  MotorPower(pow);
+  MotorSteer(deg);
+}
+
+void 
+algorithm_massuguma(void){
+  int l,r;
+  motor_set_speed(Lmotor,80,0);
+  motor_set_speed(Rmotor,80,0);
+  for(;;){
+    wai_sem(Stskc);
+    l=ecrobot_get_touch_sensor(Ltouch);
+    r=ecrobot_get_touch_sensor(Rtouch);
+    if(l==1 && r==1){
+      dbg1=1;
+      dbg2=1;
+      motor_set_speed(Rmotor,-40,1);
+      motor_set_speed(Lmotor,-40,1);
+      dly_tsk(1000);
+    }
+    else if(l==1){
+      dbg1=1;
+      dbg2=0;
+      motor_set_speed(Rmotor,0,1);
+    }
+    else if(r==1){
+      dbg1=0;
+      dbg2=1;
+      motor_set_speed(Lmotor,0,1);
+    }
+    else{
+      dbg1=0;
+      dbg2=0;
+      motor_set_speed(Lmotor,80,0);
+      motor_set_speed(Rmotor,80,0);
     }
   }
 }
-
-void
-algorithm_color(void)
-{
-  for(;;) {
-    wai_sem(Stskc);	// セマフォを待つことで定期的な実行を実現
-    cval = get_light_sensor(Color);
-    if (cval > (chigh + clow) / 2) {		// 閾値より大きいとき
-      motor_set_speed(Lmotor, HIGHPOWER, 1);
-      motor_set_speed(Rmotor, LOWPOWER, 1);
-    } else {					// 閾値より小さいとき
-      motor_set_speed(Rmotor, HIGHPOWER, 1);
-      motor_set_speed(Lmotor, LOWPOWER, 1);
-    }
-  }
-}
-
 
 void
 algorithm_dual(void)
@@ -636,7 +658,7 @@ void
   display_update();
   // カラーセンサーを使う場合にはライトセンサーとして使う
   // REDが一番ダイナミックレンジが広いようなので、あえてWHITEでなくREDで
-  ecrobot_set_nxtcolorsensor(Color, NXT_LIGHTSENSOR_RED);
+  ecrobot_set_nxtcolorsensor(Color, NXT_LIGHTSENSOR_WHITE);
   ecrobot_get_bt_device_name(name);	// システム名の取得
 
   act_tsk(Tmain);
@@ -802,8 +824,8 @@ ecrobot_device_initialize(void)
 {
   nxt_motor_set_speed(Rmotor, 0, 0);
   nxt_motor_set_speed(Lmotor, 0, 0);
+  ecrobot_init_sonar_sensor(Sonar);
   ecrobot_init_nxtcolorsensor(Color, NXT_COLORSENSOR);
-  ecrobot_set_light_sensor_active(Light);
 }
 
 /* システム停止時に呼ばれるルーチン */
@@ -813,5 +835,6 @@ ecrobot_device_terminate(void)
   nxt_motor_set_speed(Rmotor, 0, 1);
   nxt_motor_set_speed(Lmotor, 0, 1);
   ecrobot_term_nxtcolorsensor(Color);
+  ecrobot_term_sonar_sensor(Sonar);
   ecrobot_set_light_sensor_inactive(Light);
 }

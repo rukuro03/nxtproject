@@ -19,13 +19,19 @@ int get_light_sensor(int);
 #define LOWPOWER (20)
 #define HIGHPOWER (30)
 
+#define BASEPOWER 40
+
 #ifndef _MACRO_ONLY
 // ポートに関する定数値を列挙型として登録
 typedef enum {
 	Rmotor = NXT_PORT_B,
 	Lmotor = NXT_PORT_C,
-	Light  = NXT_PORT_S3,
-	Color  = NXT_PORT_S4,
+	Arm=NXT_PORT_A,
+	Rtouch = NXT_PORT_S1,
+	Ltouch = NXT_PORT_S4,
+	Sonar = NXT_PORT_S2,
+	Color  = NXT_PORT_S3,
+	Light = 0,
 } DeviceConstants;
 #endif
 
