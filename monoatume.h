@@ -52,8 +52,8 @@ typedef enum{
 } SensorFlugs;
 
 typedef enum{
-  Black = 0x00;
-  White = 0xff;
+  Black = 0x00,
+  White = 0xff,
 } Colors;
   
 #endif

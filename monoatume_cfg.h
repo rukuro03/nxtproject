@@ -1,3 +1,4 @@
+
 #ifndef MONOATUME_CFG_H
 #define MONOATUME_CFG_H
 
@@ -13,6 +14,7 @@ extern void MainTsk(VP_INT exinf);
 extern void QuitTsk(VP_INT exinf);
 extern void FuncTsk(VP_INT exinf);
 extern void MoveTsk(VP_INT exinf);
+extern void CheckTsk(VP_INT exinf);
 extern void TimerTsk(VP_INT exinf);
 extern void TimeOutTsk(VP_INT exinf);
 extern void DispTsk(VP_INT exinf);

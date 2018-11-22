@@ -46,12 +46,12 @@ int get_touch(){
 
 void get_master_slave(DeviceConstants* master,DeviceConstants* slave){
   if(g_turn<0){
-    &master=Rmotor;
-    &slave=Lmotor;
+    *master=Rmotor;
+    *slave=Lmotor;
   }
   else{
-    &master=Lmotor;
-    &slave=Rmotor;
+    *master=Lmotor;
+    *slave=Rmotor;
   }
 }
 
@@ -59,16 +59,22 @@ void func_calib(){
   
 }
 
+void strategy(){
+  act_tsk(Tmove);
+  MoveLength(100,0,1000);
+}
+
 void func_menu(){
   NameFunc MainMenu[] = {
     {"Calibration", func_calib},	// センサーのキャリブレーション
-    {"SetStrategy",strategy}
+    {"SetStrategy",strategy},
     {"Start", NULL},			// ライントレースの開始
     {"Exit", ecrobot_restart_NXT},	// OSの制御に戻る
     {"Power Off", ecrobot_shutdown_NXT},	// 電源を切る
   };
   int cnt=ARRAYSIZE(MainMenu);
   int i;
+  nxtButton btn;
   static int menu = 0;
   for (;;) {
     display_clear(0);
@@ -77,15 +83,15 @@ void func_menu(){
         nxt_display_dish(nxt_display_set, 6, i * 8 + 3, 3);
       }
       display_goto_xy(2, i+1);
-      display_string(tbl[i].name);
+      display_string(MainMenu[i].name);
     }
     display_update();
     btn = get_btn();
     switch (btn) {
     case Obtn:	// オレンジボタン == 選択
-      if (tbl[menu].func == NULL)
+      if (MainMenu[menu].func == NULL)
 	return;
-      g_function=tbl[menu].func();
+      g_function=MainMenu[menu].func;
       continue;
     case Cbtn:	// グレーボタン == キャンセル
       continue;
@@ -105,14 +111,17 @@ void func_menu(){
 }
 
 //移動用関数群
-void MoveLength(int pow,int turn,int length){
+FLGPTN MoveLength(int pow,int turn,int length){
+  FLGPTN sensor;
   //turn:-200~200
   //turnがマイナスだと右がマスター左がスレーブ
   //turnがプラスだと左がマスター右がスレーブ
   g_power=pow;
   g_turn=turn;
   g_length=length;
+  g_timeout=1000;
   act_tsk(Tcheck);
+  act_tsk(Ttimeout);
   /*
     完了/時間切れ/左右どちらかのタッチセンサが押される
     のいずれかまで待つ
@@ -120,6 +129,7 @@ void MoveLength(int pow,int turn,int length){
   wai_flg(Fsens,efEndMove | efTOMove | efRtouch | efLtouch, TWF_ORW, &sensor);
   g_power=0;
   g_turn=0;
+  return sensor;
 }
 
 void MoveArm(int deg){
@@ -135,7 +145,7 @@ void MoveArm(int deg){
 */
 void InitTsk(VP_INT exinf){
   g_timer=TIME_LEFT;
-  display_clear();
+  display_clear(0);
   display_goto_xy(2, 3);
   display_string("Initializing");
   display_update();
@@ -159,7 +169,9 @@ void ButtonTsk(VP_INT exinf){
   do {
     dly_tsk(7);
     check_NXT_buttons();
-  } while (!btn=ecrobot_get_button_state() && !touch=get_touch());
+    btn=ecrobot_get_button_state();
+    touch=get_touch();
+  } while (!btn&& !touch);
   while(ecrobot_get_button_state() && get_touch()){
     dly_tsk(7);
     check_NXT_buttons();
@@ -216,7 +228,6 @@ void QuitTsk(VP_INT exinf){
     //それも無理やりter_tskしてます。果たしてうまくいくかどうか
     ter_tsk(Tfunc);
     ter_tsk(Tmove);
-    ter_tsk(Tmusc);
     ter_tsk(Ttimer);
     ter_tsk(Ttimeout);
     act_tsk(Tmain);
@@ -248,13 +259,12 @@ void MoveTsk(VP_INT exinf){
   int mrot,srot;
   int turn,power;
   double val,error=0,error_d=0,error_i=0;
-  int power;
   for(;;){
     power=g_power;
     turn=g_turn;
     if(turn<0)
       turn=-turn;
-    get_master_slave(master,slave);
+    get_master_slave(&master,&slave);
       
     mrot=nxt_motor_get_count(master);
     srot=nxt_motor_get_count(slave);
@@ -269,7 +279,7 @@ void MoveTsk(VP_INT exinf){
     power+=g_pgain*error;// P
     power+=g_igain*error_i;// I
     power+=g_dgain*error_d;// D
-    nxt_motor_set_speed(slave,power+power, 0);
+    nxt_motor_set_speed(slave,g_power+power, 0);
     dly_tsk(10);
   }
 }
@@ -295,12 +305,12 @@ void TimerTsk(VP_INT exinf){
 void CheckTsk(VP_INT exinf){
   DeviceConstants master,slave;
   int move=0,rot=0;
-  get_master_slave(master,slave);
+  get_master_slave(&master,&slave);
   int rot_p=nxt_motor_get_count(master);
   
   for(;;){
     rot=nxt_motor_get_count(master)-rot_p;
-    if(rot>g_length){
+    if((double)WHEEL_RADIUS*rot/360>g_length){
       set_flg(Fsens,efEndMove);
       break;
     }
@@ -357,10 +367,10 @@ ColsTsk(VP_INT exinf)
 }
 
 /*
-  MuskTsk
+  MuscxTsk
   音楽用タスク　改造はしない
 */
-void MuskTsk(VP_INT exinf){
+void MuscTsk(VP_INT exinf){
   for (;;) {
     play_notes(TIMING_chiba_univ, 8, chiba_univ);
   }
