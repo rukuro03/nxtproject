@@ -28,18 +28,6 @@ typedef enum {
 
 // イベントフラグ制御用の列挙型
 /*
-ButtonFlugs:ボタン用フラグ
-左タッチセンサ>右タッチセンサ>キャンセル>左>オレンジ>右
-*/
-typedef enum{
-  efRButton = 1<<0,
-  efOButton = 1<<1,
-  efLButton = 1<<2,
-  efCButton = 1<<3,
-  efRTouch = 1<<4,
-  efLTouch = 1<<5,
-} ButtonFlugs;
-
 /*
 SensorFlugs:センサ用フラグ
 色(?bit)>左タッチセンサ>右タッチセンサ>移動タイムアウト>移動到着

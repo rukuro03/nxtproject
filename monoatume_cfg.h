@@ -20,10 +20,6 @@ extern void DispTsk(VP_INT exinf);
 extern void SensTsk(VP_INT exinf);
 extern void MuscTsk(VP_INT exinf);
 
-/* CyclicTimers */
-extern void MoveCyc(VP_INT exinf);
-extern void DispCyc(VP_INT exinf);
-
 #endif
 
 #endif

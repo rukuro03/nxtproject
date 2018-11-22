@@ -22,13 +22,25 @@ typedef struct _NameFunc {
   MFunc func;
 } NameFunc;
 
-void strategy(void);
+void strategy();
+int get_touch();
+void get_master_slave(DeviceConstants*,DeviceConstants*);
+void func_calib();
+void strategy();
+void func_menu();
+void MovePower(int);
+void MoveSteer(int);
+void CheckLenght(int);
+void SetTimeOut(int);
+FLGPTN MoveLength(int,int,int);
+void MoveArm(int);
 
 //グローバル変数群　できれば使いたくないが組み込みだからね
 //グローバル変数には g_ のプレフィックスをつけてください
 int g_timer,g_power,g_turn,g_length;
+int g_armdown;
 int g_timeout;
-int g_pgain,g_igain,g_dgain;
+int g_pgain=5,g_igain=1,g_dgain=2;
 int g_white[3]={0,0,0};
 int g_black[3]={0,0,0};
 void (*g_function)(void)=strategy;
@@ -61,12 +73,42 @@ void get_master_slave(DeviceConstants* master,DeviceConstants* slave){
 }
 
 void func_calib(){
-  
+  int prev_rot=0,rot=0;
+  //色のカリブレーション
+  //アームのカリブレーション
+  //しくじった　どっちが上かわからん
+  motor_set_speed(Arm,10,0);
+  for(;;){
+    dly_tsk(10);
+    rot=nxt_motor_get_count();
+    if(rot-prev_rot<1){
+      nxt_motor_set_count(Arm,0);//一番上に上げた状態でカウントを0にする
+      break;
+    }
+    prev_rot=rot;
+  }
+  motor_set_speed(Arm,-10,0);
+  for(;;){
+    dly_tsk(10);
+    rot=nxt_motor_get_count();
+    if(rot-prev_rot<1){
+      g_armdown=rot;
+      break;
+    }
+    prev_rot=rot;
+  }
 }
 
 void strategy(){
   act_tsk(Tmove);
-  MoveLength(100,0,1000);
+  MoveLength(100,200,1000);
+  //右に回って
+  MoveLength(100,-200,1000);
+  //左に回って
+  MoveLength(20,0,100);
+  MoveLength(-20,0,100);
+  //前後にぷるぷる
+  MoveArm(g_armdown);
 }
 
 void func_menu(){
@@ -116,17 +158,46 @@ void func_menu(){
 }
 
 //移動用関数群
+void MovePower(int pow){
+  //パワーの登録…とはいえ、g_powに代入するだけです
+  g_power=pow;
+  motor_set_speed(Rmotor,pow);
+  motor_set_speed(Lmotor,pow);
+}
+void MoveSteer(int turn){
+  //ステアリングの登録…とはいえ、g_turnに代入するだけです
+  DeviceConstants master,slave;
+  int power;
+  g_turn=turn;
+  get_master_slave(&master,&slave);
+  if(turn<0)
+    turn=-turn;
+  if(turn>100)//信地旋回以上
+    power=(double)(100-turn)*g_power/100;
+  else
+    power=(double)(turn-100)*g_power/100;
+  motor_set_speed(slave,power,0);
+}
+
+void CheckLength(int length){
+  //移動距離の登録…とはいえ、g_lengthに代入してCheckTskを起動するだけです
+  g_length=length;
+  act_tsk(Tcheck);
+}
+void SetTimeOut(int time){
+  //時間切れの登録…とはいえ、g_timeoutに代入してTimeOutTskを起動するだけです
+  g_timeout=time;
+  act_tsk(Ttimeout);
+}
+
 FLGPTN MoveLength(int pow,int turn,int length){
   FLGPTN sensor;
   //turn:-200~200
   //turnがマイナスだと右がマスター左がスレーブ
   //turnがプラスだと左がマスター右がスレーブ
-  g_power=pow;
-  g_turn=turn;
-  g_length=length;
-  g_timeout=1000;
-  act_tsk(Tcheck);
-  act_tsk(Ttimeout);
+  MovePower(power);
+  MoveSteer(turn);
+  CheckLength(length);
   /*
     完了/時間切れ/左右どちらかのタッチセンサが押される
     のいずれかまで待つ
@@ -250,7 +321,7 @@ void MoveTsk(VP_INT exinf){
     power+=g_pgain*error;// P
     power+=g_igain*error_i;// I
     power+=g_dgain*error_d;// D
-    nxt_motor_set_speed(slave,g_power+power, 0);
+    motor_set_speed(slave,g_power+power, 0);
     dly_tsk(10);
   }
 }
@@ -350,7 +421,7 @@ ColsTsk(VP_INT exinf)
 }
 
 /*
-  MuscxTsk
+  MuscTsk
   音楽用タスク　改造はしない
 */
 void MuscTsk(VP_INT exinf){
@@ -359,19 +430,6 @@ void MuscTsk(VP_INT exinf){
   }
 }
 
-//周期ハンドラ群
-
-/*
-  MoveCyc
-  一応残しておくが、今度試しにdly_tskバージョンのMoveTskを作ってみる
-*/
-void MoveCyc(VP_INT exinf){
-  isig_sem(Stskc);  
-}
-
-//一応残す
-void DispCyc(VP_INT exinf){
-}
 
 //割り込みハンドラ　システム時間のインクリメント
 void jsp_systick_low_priority(void)
