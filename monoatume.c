@@ -36,7 +36,7 @@ void (*g_function)(void)=strategy;
 //ユーティリティ群
 
 int get_touch(){
-  //RtouchかLtouchをintに適当にキャストして返す
+  //RtouchかLtouchか0を返す
   if(ecrobot_get_touch_sensor(Rtouch))
     return (int)Rtouch;
   if(ecrobot_get_touch_sensor(Ltouch))
@@ -45,6 +45,11 @@ int get_touch(){
 }
 
 void get_master_slave(DeviceConstants* master,DeviceConstants* slave){
+  //マスター(主モータ)：外側のモータ
+  //スレーブ(従モータ)；内側のモータ を取得する
+  //うーん　あくまで外側のモーターってだけだからマスター/スレーブってどうよ
+  //たしかに外側のモータが主として機能するけどさ
+  
   if(g_turn<0){
     *master=Rmotor;
     *slave=Lmotor;
@@ -158,52 +163,8 @@ void InitTsk(VP_INT exinf){
   ButtonTsk
   ボタン更新などなど
 */
-void ButtonTsk(VP_INT exinf){
-  //ボタンが押されて離されたらフラグを立てる
-  //ボタンかタッチセンサが触られるまで適当にループし、触られなくなるまで待つ
-  //同時に押されたら最初に押された判定されたやつを返す
-  //しかしフラグを待つようにするとなぁ　あんまり意味が無い気がするんですよねぇ
-  nxtButton btn;
-  int touch;
-  clr_flg(Fbtn,0);//フラグクリア
-  do {
-    dly_tsk(7);
-    check_NXT_buttons();
-    btn=ecrobot_get_button_state();
-    touch=get_touch();
-  } while (!btn&& !touch);
-  while(ecrobot_get_button_state() && get_touch()){
-    dly_tsk(7);
-    check_NXT_buttons();
-  }
-  switch(btn){
-  case Obtn:
-    set_flg(Fbtn,efOButton);
-    break;
-  case Lbtn:
-    set_flg(Fbtn,efLButton);
-    break;
-  case Rbtn:
-    set_flg(Fbtn,efRButton);
-    break;
-  case Cbtn:
-    set_flg(Fbtn,efCButton);
-    break;
-  default:
-    break;
-  }
-  switch(touch){
-  case Ltouch:
-    set_flg(Fbtn,efLTouch);
-    break;
-  case Rtouch:
-    set_flg(Fbtn,efRTouch);
-    break;
-  default:
-    break;
-  }
-  dly_tsk(7);
-}
+//やはり意味がないと判断し削除しました
+//タッチセンサのフラグはSensTskで制御します
 
 /*
   MainTsk
@@ -264,14 +225,24 @@ void MoveTsk(VP_INT exinf){
     turn=g_turn;
     if(turn<0)
       turn=-turn;
+    //turnは"外側の車輪の回転角が内側の車輪の回転角のturn％に"を表す数字
     get_master_slave(&master,&slave);
-      
+
     mrot=nxt_motor_get_count(master);
     srot=nxt_motor_get_count(slave);
-    val=(double)100*mrot/srot;
-    
+    //mrotとsrotの比(%)を取る 100*450/900=50
+    val=(double)100*srot/mrot;
     error_d=error;
-    error=val-turn;
+    if(turn>100){//信地旋回以上
+      //turnが200ならvalが100になったときにerror=0
+      //turnが170ならvalが70になったときにerror=0
+      error=val-(turn-100);
+    }
+    else{
+      //turnが30ならvalが70になったときにerror=0
+      //turnが90ならvalが10になったときにerror=0
+      error=val-(100-turn);
+    }
     error_i+=error;
     error_d-=error;
     
@@ -343,25 +314,37 @@ void TimeOutTsk(VP_INT exinf)
   常にヘッダとフッタを表示し続ける
 */
 void DispTsk(VP_INT exinf){
-  display_goto_xy(0,0);
-  display_string(MACHINE_NAME);
-  display_goto_xy(10,0);
-  display_int(g_timer,4);
-  display_goto_xy(0,6);
-  display_string("FOOTER");
-  display_update();  
-  dly_tsk(5);
+  for(;;){
+    display_goto_xy(0,0);
+    display_string(MACHINE_NAME);
+    display_goto_xy(10,0);
+    display_int(g_timer,4);
+    display_goto_xy(0,6);
+    display_string("FOOTER");
+    display_update();  
+    dly_tsk(5);
+  }
 }
 
 /*
-  ColsTsk
-  カラーセンサ制御用タスク　改造はしない
+  SensTsk
+  センサ制御用タスク
+  カラーセンサの調整・タッチセンサ用フラグ
 */
 void
 ColsTsk(VP_INT exinf)
 {
+  int touch;
   for (;;) {
     ecrobot_process_bg_nxtcolorsensor();
+    if(ecrobot_get_touch_sensor(Rtouch))
+      set_flg(Fsens,efRtouch);
+    else
+      clr_flg(Fsens,!efRtouch);
+    if(ecrobot_get_touch_sensor(Ltouch))
+      set_flg(Fsens,efLtouch);
+    else
+      clr_flg(Fsens,!efLtouch);
     dly_tsk(2);
   }
 }
