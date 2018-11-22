@@ -7,16 +7,19 @@
 #		music.exeだけは残ってしまうので注意
 #	make firmware　でNXTにファームウェアをアップロード
 
+#	11/18 適当に本来jougaだったファイル名を全てmonoatumeにしたが、
+#	その影響でmakeできなくなるかもしれない。多分大丈夫だけど！
+#	その場合元のMakefileを回収してきて、monoatumeをjougaに直せば問題ないはず。
 
 # Target specific macros
-TARGET = jouga
+TARGET = monoatume
 TARGET_SOURCES = \
-	jouga.c \
+	monoatume.c \
 	music.c button.c display.c graphics.c
-TOPPERS_JSP_CFG_SOURCE = ./jouga.cfg
+TOPPERS_JSP_CFG_SOURCE = ./monoatume.cfg
 TARGET_HEADERS = \
-	jouga.h \
-	jouga_cfg.h music.h button.h display.h graphics.h
+	monoatume.h \
+	monoatume_cfg.h music.h button.h display.h graphics.h
 FIRMWARE = c:/cygwin/nexttool/lms_arm_nbcnxc_128.rfw
 
 # ここから先は、内容を理解してから変更してください
@@ -45,9 +48,9 @@ music	: music.c
 
 #### 依存関係の指定
 #### Dependencies
-jouga.o		: jouga.h jouga_cfg.h music.h button.h graphics.h display.h
+monoatume.o	: monoatume.h monoatume_cfg.h music.h button.h graphics.h display.h
 button.o	: button.h
 music.o		:
-kernel_cfg.c	: jouga_cfg.h jouga.h
+kernel_cfg.c	: monoatume_cfg.h monoatume.h
 display.o	: display.h
 graphics.o	: graphics.h display.h
