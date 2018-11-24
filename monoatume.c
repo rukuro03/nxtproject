@@ -22,7 +22,6 @@ typedef struct _NameFunc {
   MFunc func;
 } NameFunc;
 
-void strategy();
 int get_touch();
 void get_master_slave(DeviceConstants*,DeviceConstants*);
 void func_calib();
@@ -32,6 +31,8 @@ void MovePower(int);
 void MoveSteer(int);
 void CheckLenght(int);
 void SetTimeOut(int);
+FLGPTN WaitForOR(FLGPTN);
+FLGPTN WaitForAND(FLGPTN);
 FLGPTN MoveLength(int,int,int);
 void MoveArm(int);
 
@@ -58,7 +59,7 @@ int get_touch(){
 
 void get_master_slave(DeviceConstants* master,DeviceConstants* slave){
   //マスター(主モータ)：外側のモータ
-  //スレーブ(従モータ)；内側のモータ を取得する
+  //スレーブ(従モータ)：内側のモータ を取得する
   //うーん　あくまで外側のモーターってだけだからマスター/スレーブってどうよ
   //たしかに外側のモータが主として機能するけどさ
   
@@ -101,29 +102,34 @@ void func_calib(){
 
 void strategy(){
   act_tsk(Tmove);
-  MoveLength(100,200,1000);
+  //機能テスト用に適当に動作を指定しました
+  //しばらくまっすぐすすんで
+  MoveLength(40,0,1000);
   //右に回って
-  MoveLength(100,-200,1000);
+  MoveLength(100,200,1000);
   //左に回って
+  MoveLength(100,-200,1000);
+  //前後にぷるぷる
   MoveLength(20,0,100);
   MoveLength(-20,0,100);
-  //前後にぷるぷる
+  //アームを下ろす
   MoveArm(g_armdown);
 }
 
 void func_menu(){
   NameFunc MainMenu[] = {
-    {"Calibration", func_calib},	// センサーのキャリブレーション
+    {"Start", NULL},//選択された関数を開始
+    {"Calibration", func_calib},// センサーのキャリブレーション
     {"SetStrategy",strategy},
-    {"Start", NULL},			// ライントレースの開始
-    {"Exit", ecrobot_restart_NXT},	// OSの制御に戻る
-    {"Power Off", ecrobot_shutdown_NXT},	// 電源を切る
+    {"Exit", ecrobot_restart_NXT},// OSの制御に戻る
+    {"Power Off", ecrobot_shutdown_NXT},// 電源を切る
   };
   int cnt=ARRAYSIZE(MainMenu);
   int i;
   nxtButton btn;
   static int menu = 0;
   for (;;) {
+    wai_sem(Sdisp);//ディスプレイの占有権待ち
     display_clear(0);
     for (i = 0; i < cnt; i++) {
       if (i == menu) {
@@ -132,7 +138,7 @@ void func_menu(){
       display_goto_xy(2, i+1);
       display_string(MainMenu[i].name);
     }
-    display_update();
+    sig_sem(Sdisp);//ディスプレイの占有権返却
     btn = get_btn();
     switch (btn) {
     case Obtn:	// オレンジボタン == 選択
@@ -172,10 +178,8 @@ void MoveSteer(int turn){
   get_master_slave(&master,&slave);
   if(turn<0)
     turn=-turn;
-  if(turn>100)//信地旋回以上
-    power=(double)(100-turn)*g_power/100;
-  else
-    power=(double)(turn-100)*g_power/100;
+  //turnの値は「外側のタイヤに対し内側のタイヤは(100-turn%)回る」という意味
+  power=(double)(100-turn)*g_power/100;
   motor_set_speed(slave,power,0);
 }
 
@@ -190,11 +194,28 @@ void SetTimeOut(int time){
   act_tsk(Ttimeout);
 }
 
+FLGPTN WaitForOR(FLGPTN flg){
+  //wai_flg(Fsens,flg,TWF_ORW,&sensor)のラッパー関数です
+  //先生のパクリ
+  FLGPTN sensor;
+  wai_flg(Fsens,flg,TWF_ORW,&sensor);
+  return sensor;
+}
+
+FLGPTN WaitForAND(FLGPTN flg){
+  //wai_flg(Fsens,flg,TWF_ORW,&sensor)のラッパー関数です
+  //先生のパクリ
+  FLGPTN sensor;
+  wai_flg(Fsens,flg,TWF_ANDW,&sensor);
+  return sensor;
+}
+
 FLGPTN MoveLength(int pow,int turn,int length){
   FLGPTN sensor;
   //turn:-200~200
-  //turnがマイナスだと右がマスター左がスレーブ
-  //turnがプラスだと左がマスター右がスレーブ
+  //turnの値は「外側のタイヤに対し内側のタイヤは(100-turn%)回る」という意味
+  //turnがマイナスだと右が外側左が内側
+  //turnがプラスだと左が外側右が内側
   MovePower(power);
   MoveSteer(turn);
   CheckLength(length);
@@ -202,7 +223,7 @@ FLGPTN MoveLength(int pow,int turn,int length){
     完了/時間切れ/左右どちらかのタッチセンサが押される
     のいずれかまで待つ
   */
-  wai_flg(Fsens,efEndMove | efTOMove | efRtouch | efLtouch, TWF_ORW, &sensor);
+  sensor=WaitForOR(efEndMove | efTOMove | efRtouch | efLtouch)
   g_power=0;
   g_turn=0;
   return sensor;
@@ -296,7 +317,7 @@ void MoveTsk(VP_INT exinf){
     turn=g_turn;
     if(turn<0)
       turn=-turn;
-    //turnは"外側の車輪の回転角が内側の車輪の回転角のturn％に"を表す数字
+    //turnの値は「外側のタイヤに対し内側のタイヤは(100-turn%)回る」という意味
     get_master_slave(&master,&slave);
 
     mrot=nxt_motor_get_count(master);
@@ -386,13 +407,15 @@ void TimeOutTsk(VP_INT exinf)
 */
 void DispTsk(VP_INT exinf){
   for(;;){
+    wai_sem(Sdisp);
     display_goto_xy(0,0);
     display_string(MACHINE_NAME);
     display_goto_xy(10,0);
     display_int(g_timer,4);
     display_goto_xy(0,6);
     display_string("FOOTER");
-    display_update();  
+    display_update();
+    sig_sem(Sdisp);
     dly_tsk(5);
   }
 }
