@@ -15,6 +15,7 @@
 #define MACHINE_NAME "GOHAN"
 #define TIME_LEFT 180
 #define WHEEL_RADIUS 30 
+#define MOVETSK_WAIT 100
 
 typedef void (*MFunc)(void);
 typedef struct _NameFunc {
@@ -185,7 +186,10 @@ void MoveSteer(int turn){
 
 void CheckLength(int length){
   //移動距離の登録…とはいえ、g_lengthに代入してCheckTskを起動するだけです
+  //ついでにここでモータの回転角度を0に初期化します
   g_length=length;
+  nxt_motor_set_count(Rmotor,0);
+  nxt_motor_set_count(Lmotor,0);
   act_tsk(Tcheck);
 }
 void SetTimeOut(int time){
@@ -203,7 +207,7 @@ FLGPTN WaitForOR(FLGPTN flg){
 }
 
 FLGPTN WaitForAND(FLGPTN flg){
-  //wai_flg(Fsens,flg,TWF_ORW,&sensor)のラッパー関数です
+  //wai_flg(Fsens,flg,TWF_ANDW,&sensor)のラッパー関数です
   //先生のパクリ
   FLGPTN sensor;
   wai_flg(Fsens,flg,TWF_ANDW,&sensor);
@@ -305,7 +309,7 @@ void FuncTsk(VP_INT exinf){
   MoveTsk
   モータの回転数左右比をPID制御する
   移動用関数から呼ばれ起動し、指定されたパワーと旋回値を元に制御する
-  slaveの値のみを変化させる
+  内側のパワーのみを変化させる
 */
 void MoveTsk(VP_INT exinf){
   DeviceConstants master,slave;
@@ -319,9 +323,11 @@ void MoveTsk(VP_INT exinf){
       turn=-turn;
     //turnの値は「外側のタイヤに対し内側のタイヤは(100-turn%)回る」という意味
     get_master_slave(&master,&slave);
-
     mrot=nxt_motor_get_count(master);
     srot=nxt_motor_get_count(slave);
+    dly_tsk(MOVETSK_WAIT);
+    mrot=nxt_motor_get_count(master)-mrot;
+    srot=nxt_motor_get_count(slave)-srot;
     //mrotとsrotの比(%)を取る 100*450/900=50
     val=(double)100*srot/mrot;
     error_d=error;
@@ -343,7 +349,6 @@ void MoveTsk(VP_INT exinf){
     power+=g_igain*error_i;// I
     power+=g_dgain*error_d;// D
     motor_set_speed(slave,g_power+power, 0);
-    dly_tsk(10);
   }
 }
 

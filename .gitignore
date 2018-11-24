@@ -1,10 +1,11 @@
 *
 !.gitignore
-!README.txt
+!README.md
 !jouga.c
 !jouga.h
 !/test
 !memo.md
+!siyou.md
 !monoatume.cfg
 !monoatume_cfg.h
 !monoatume.h
