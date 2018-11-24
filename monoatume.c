@@ -28,8 +28,10 @@ void get_master_slave(DeviceConstants*,DeviceConstants*);
 void func_calib();
 void strategy();
 void func_menu();
-void MovePower(int);
-void MoveSteer(int);
+void MoveSetPower(int);
+void MoveSetSteer(int);
+void MoveActivate();
+void MoveTerminate();
 void CheckLenght(int);
 void SetTimeOut(int);
 FLGPTN WaitForOR(FLGPTN);
@@ -102,7 +104,6 @@ void func_calib(){
 }
 
 void strategy(){
-  act_tsk(Tmove);
   //機能テスト用に適当に動作を指定しました
   //しばらくまっすぐすすんで
   MoveLength(40,0,1000);
@@ -165,13 +166,13 @@ void func_menu(){
 }
 
 //移動用関数群
-void MovePower(int pow){
+void MoveSetPower(int pow){
   //パワーの登録…とはいえ、g_powに代入するだけです
   g_power=pow;
   motor_set_speed(Rmotor,pow);
   motor_set_speed(Lmotor,pow);
 }
-void MoveSteer(int turn){
+void MoveSetSteer(int turn){
   //ステアリングの登録…とはいえ、g_turnに代入するだけです
   DeviceConstants master,slave;
   int power;
@@ -182,6 +183,16 @@ void MoveSteer(int turn){
   //turnの値は「外側のタイヤに対し内側のタイヤは(100-turn%)回る」という意味
   power=(double)(100-turn)*g_power/100;
   motor_set_speed(slave,power,0);
+}
+void MoveActivate(){
+  //  act_tsk(Tmove)のラッパーです
+  act_tsk(Tmove);
+}
+void MoveTerminate(){
+  //  ter_tsk(Tmove)のラッパーです
+  ter_tsk(Tmove);
+  MoveSetPower(0);
+  MoveSetSteer(0);  
 }
 
 void CheckLength(int length){
@@ -223,13 +234,13 @@ FLGPTN MoveLength(int pow,int turn,int length){
   MovePower(power);
   MoveSteer(turn);
   CheckLength(length);
+  MoveActivate();
   /*
     完了/時間切れ/左右どちらかのタッチセンサが押される
     のいずれかまで待つ
   */
-  sensor=WaitForOR(efEndMove | efTOMove | efRtouch | efLtouch)
-  g_power=0;
-  g_turn=0;
+  sensor=WaitForOR(efEndMove | efTOMove | efRtouch | efLtouch);
+  MoveTerminate();
   return sensor;
 }
 
@@ -309,20 +320,20 @@ void FuncTsk(VP_INT exinf){
   MoveTsk
   モータの回転数左右比をPID制御する
   移動用関数から呼ばれ起動し、指定されたパワーと旋回値を元に制御する
-  内側のパワーのみを変化させる
+  内側のモータのパワーのみを変化させる
 */
 void MoveTsk(VP_INT exinf){
   DeviceConstants master,slave;
   int mrot,srot;
   int turn,power;
   double val,error=0,error_d=0,error_i=0;
+  power=g_power;
+  turn=g_turn;
+  if(turn<0)
+    turn=-turn;
+  //turnの値は「外側のタイヤに対し内側のタイヤは(100-turn%)回る」という意味
+  get_master_slave(&master,&slave);
   for(;;){
-    power=g_power;
-    turn=g_turn;
-    if(turn<0)
-      turn=-turn;
-    //turnの値は「外側のタイヤに対し内側のタイヤは(100-turn%)回る」という意味
-    get_master_slave(&master,&slave);
     mrot=nxt_motor_get_count(master);
     srot=nxt_motor_get_count(slave);
     dly_tsk(MOVETSK_WAIT);
@@ -431,7 +442,7 @@ void DispTsk(VP_INT exinf){
   カラーセンサの調整・タッチセンサ用フラグ
 */
 void
-ColsTsk(VP_INT exinf)
+SensTsk(VP_INT exinf)
 {
   int touch;
   for (;;) {
