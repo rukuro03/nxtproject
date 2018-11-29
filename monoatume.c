@@ -15,7 +15,11 @@
 #define MACHINE_NAME "GOHAN"
 #define TIME_LEFT 180
 #define WHEEL_RADIUS 30 
-#define MOVETSK_WAIT 100
+#define MOVETSK_WAIT 200
+#define ARM_POWER 30
+//ヘッダー・フッター位置 
+#define HEADER 0
+#define FOOTER 7
 
 typedef void (*MFunc)(void);
 typedef struct _NameFunc {
@@ -32,8 +36,10 @@ void MoveSetPower(int);
 void MoveSetSteer(int);
 void MoveActivate();
 void MoveTerminate();
-void LogScreen(char*,int,int);
-void CheckLenght(int);
+void ClearLog();
+void LogString(char*);
+void LogInt(int);
+void CheckLength(int);
 void SetTimeOut(int);
 FLGPTN WaitForOR(FLGPTN);
 FLGPTN WaitForAND(FLGPTN);
@@ -45,7 +51,9 @@ void MoveArm(int);
 int g_timer,g_power,g_turn,g_length;
 int g_armdown;
 int g_timeout;
-int g_pgain=5,g_igain=1,g_dgain=2;
+int g_dbg1=0,g_dbg2=0;
+double g_pgain=1,g_igain=1,g_dgain=1;
+int g_log=HEADER+1;
 int g_white[3]={0,0,0};
 int g_black[3]={0,0,0};
 void (*g_function)(void)=strategy;
@@ -78,53 +86,67 @@ void get_master_slave(DeviceConstants* master,DeviceConstants* slave){
 }
 
 void func_calib(){
-  int prev_rot=0,rot=0;
+  int rot=0;
   //色のカリブレーション
   //アームのカリブレーション
   //しくじった　どっちが上かわからん
-  motor_set_speed(Arm,10,0);
+  motor_set_speed(Arm,-ARM_POWER,1);
+  LogString("Arm Up");
   for(;;){
-    dly_tsk(10);
     rot=nxt_motor_get_count(Arm);
-    if(rot-prev_rot<1){
+    dly_tsk(1000);
+    rot-=nxt_motor_get_count(Arm);
+    if(rot<0)
+      rot=-rot;
+    if(rot<1){
       nxt_motor_set_count(Arm,0);//一番上に上げた状態でカウントを0にする
       break;
     }
-    prev_rot=rot;
   }
-  motor_set_speed(Arm,-10,0);
+  motor_set_speed(Arm,ARM_POWER,1);
+  LogString("Arm Down");
   for(;;){
-    dly_tsk(10);
     rot=nxt_motor_get_count(Arm);
-    if(rot-prev_rot<1){
-      g_armdown=rot;
+    dly_tsk(1000);
+    rot-=nxt_motor_get_count(Arm);
+    if(rot<0)
+      rot=-rot;
+    if(rot<1){
+      g_armdown=nxt_motor_get_count(Arm);
       break;
     }
-    prev_rot=rot;
   }
+  LogString("End");
+  motor_set_speed(Arm,0,1);
 }
 
 void strategy(){
   //機能テスト用に適当に動作を指定しました
   //しばらくまっすぐすすんで
-  LogScreen("Start",1,2);
-  MoveLength(40,0,1000);
+  act_tsk(Ttimer);
+  act_tsk(Tmusc);
+  LogString("Start");
+  MoveLength(40,0,100);
   //右に回って
-  LogScreen("Turn right",1,3);
-  MoveLength(100,200,1000);
+  LogString("Turn right");
+  MoveLength(50,200,100);
   //左に回って
-  MoveLength(100,-200,1000);
+  LogString("Turn left");
+  MoveLength(50,-200,100);
   //前後にぷるぷる
-  MoveLength(20,0,100);
+  LogString("Go back");
   MoveLength(-20,0,100);
+  LogString("and forth");
+  MoveLength(20,0,100);
   //アームを下ろす
   MoveArm(g_armdown);
 }
 
 void func_menu(){
   NameFunc MainMenu[] = {
-    {"Calibration", func_calib},// センサーのキャリブレーション
+    {"countdbg",DEBUG_count},
     {"Start",strategy},
+    {"Calibration", func_calib},// センサーのキャリブレーション
     {"Power Off", ecrobot_shutdown_NXT},// 電源を切る
   };
   int cnt=ARRAYSIZE(MainMenu);
@@ -137,7 +159,7 @@ void func_menu(){
     display_clear(0);
     for (i = 0; i < cnt; i++) {
       if (i == menu) {
-	display_goto_xy(1,i+1);
+	display_goto_xy(1,i+HEADER+1);
 	display_string(">");
       }
       display_goto_xy(2, i+1);
@@ -172,8 +194,8 @@ void func_menu(){
 void MoveSetPower(int pow){
   //パワーの登録…とはいえ、g_powに代入するだけです
   g_power=pow;
-  motor_set_speed(Rmotor,pow,0);
-  motor_set_speed(Lmotor,pow,0);
+  motor_set_speed(Rmotor,pow,1);
+  motor_set_speed(Lmotor,pow,1);
 }
 void MoveSetSteer(int turn){
   //ステアリングの登録…とはいえ、g_turnに代入するだけです
@@ -184,8 +206,8 @@ void MoveSetSteer(int turn){
   if(turn<0)
     turn=-turn;
   //turnの値は「外側のタイヤに対し内側のタイヤは(100-turn%)回る」という意味
-  power=(double)(100-turn)*g_power/100;
-  motor_set_speed(slave,power,0);
+  power=(100-turn)*g_power/100.0;
+  motor_set_speed(slave,power,1);
 }
 void MoveActivate(){
   //  act_tsk(Tmove)のラッパーです
@@ -198,11 +220,31 @@ void MoveTerminate(){
   MoveSetSteer(0);  
 }
 
-void LogScreen(char* str,int x,int y){
+void ClearLog(){
+  g_log=HEADER+1;
   wai_sem(Sdisp);
-  display_goto_xy(x,y);
+  display_clear(0);
+  sig_sem(Sdisp);
+}
+
+void LogString(char* str){
+  wai_sem(Sdisp);
+  display_goto_xy(2,g_log);
   display_string(str);
   sig_sem(Sdisp);
+  g_log++;
+  if(g_log>=FOOTER)
+    g_log=HEADER+1;
+}
+
+void LogInt(int dat){
+  wai_sem(Sdisp);
+  display_goto_xy(2,g_log);
+  display_int(dat,4);
+  sig_sem(Sdisp);
+  g_log++;
+  if(g_log>=FOOTER)
+    g_log=HEADER+1;
 }
 
 void CheckLength(int length){
@@ -255,8 +297,15 @@ FLGPTN MoveLength(int pow,int turn,int length){
 }
 
 void MoveArm(int deg){
-  //最も上に上げたアームの状態から何度曲げるかを指定
-  
+  //現在のアームの状態から何度曲げるかを指定
+  /* int ini=nxt_motor_get_count(Arm); */
+  /* int  */
+  /* for(;;){ */
+  /*   motor_set_power(Arm,ARM_POWER,1); */
+  /*   if() */
+  /*   dly_tsk(10); */
+  /* } */
+  /* motor_set_power(Arm,0,1); */
 }
 
 //タスク用関数群
@@ -300,15 +349,19 @@ void MainTsk(VP_INT exinf){
 */
 void QuitTsk(VP_INT exinf){
   nxtButton btn;
-  btn=get_btn();
-  if(btn==Cbtn){
-    //うーん　起動されるかされないかわからないタスクが多いんですが、
-    //それも無理やりter_tskしてます。果たしてうまくいくかどうか
-    ter_tsk(Tfunc);
-    ter_tsk(Tmove);
-    ter_tsk(Ttimer);
-    ter_tsk(Ttimeout);
-    act_tsk(Tmain);
+  for(;;){
+    btn=get_btn();
+    if(btn==Cbtn){
+      //うーん　起動されるかされないかわからないタスクが多いんですが、
+      //それも無理やりter_tskしてます。果たしてうまくいくかどうか
+      ter_tsk(Tfunc);
+      ter_tsk(Ttimer);
+      ter_tsk(Ttimeout);
+      ter_tsk(Tmusc);
+      MoveTerminate();
+      act_tsk(Tmain);
+    }
+    dly_tsk(20);
   }
 }
 
@@ -322,10 +375,14 @@ void FuncTsk(VP_INT exinf){
   display_clear(0);
   sig_sem(Sdisp);
   (*g_function)();
+  wai_sem(Sdisp);
+  display_clear(0);
+  display_goto_xy(2,3);
+  display_string("Press cancel");
+  sig_sem(Sdisp);
   for(;;){
-    display_goto_xy(2, 3);
-    display_string("Press Cancel Button");
     //QuitTskで終了されるのを待つ
+    dly_tsk(20000);
   }
 }
 
@@ -339,12 +396,14 @@ void MoveTsk(VP_INT exinf){
   DeviceConstants master,slave;
   int mrot,srot;
   int turn,power;
+  int cur_spow;//current slave power
   double val,error=0,error_d=0,error_i=0;
   power=g_power;
   turn=g_turn;
   if(turn<0)
     turn=-turn;
-  //turnの値は「外側のタイヤに対し内側のタイヤは(100-turn%)回る」という意味
+  //turnの値は「外側のタイヤに対し内側のタイヤは(100-turn)%回る」という意味
+  cur_spow=(100-turn)*g_power/100.0;
   get_master_slave(&master,&slave);
   for(;;){
     mrot=nxt_motor_get_count(master);
@@ -352,27 +411,37 @@ void MoveTsk(VP_INT exinf){
     dly_tsk(MOVETSK_WAIT);
     mrot=nxt_motor_get_count(master)-mrot;
     srot=nxt_motor_get_count(slave)-srot;
+    if(mrot<0)
+      mrot=-mrot;
+    if(srot<0)
+      srot=-srot;
     //mrotとsrotの比(%)を取る 100*450/900=50
+    if(mrot==0)
+      mrot=1;
     val=(double)100*srot/mrot;
     error_d=error;
     if(turn>100){//信地旋回以上
       //turnが200ならvalが100になったときにerror=0
       //turnが170ならvalが70になったときにerror=0
-      error=val-(turn-100);
+      error=(turn-100)-val;
     }
     else{
       //turnが30ならvalが70になったときにerror=0
       //turnが90ならvalが10になったときにerror=0
-      error=val-(100-turn);
+      error=(100-turn)-val;
     }
     error_i+=error;
     error_d-=error;
     
     power=0;
-    power+=g_pgain*error;// P
-    power+=g_igain*error_i;// I
-    power+=g_dgain*error_d;// D
-    motor_set_speed(slave,g_power+power, 0);
+
+    power+=g_pgain*error;
+    power+=g_igain*error_i;
+    power+=g_dgain*error_d;
+    cur_spow+=power/100;
+    motor_set_speed(slave,cur_spow, 1);
+    g_dbg1=g_power;
+    g_dbg2=cur_spow;
   }
 }
 
@@ -402,6 +471,8 @@ void CheckTsk(VP_INT exinf){
   
   for(;;){
     rot=nxt_motor_get_count(master)-rot_p;
+    if(rot<0)
+      rot=-rot;
     if((double)WHEEL_RADIUS*rot/360>g_length){
       set_flg(Fsens,efEndMove);
       break;
@@ -437,12 +508,15 @@ void TimeOutTsk(VP_INT exinf)
 void DispTsk(VP_INT exinf){
   for(;;){
     wai_sem(Sdisp);
-    display_goto_xy(0,0);
+    display_goto_xy(0,HEADER);
     display_string(MACHINE_NAME);
-    display_goto_xy(10,0);
+    display_goto_xy(10,HEADER);
     display_int(g_timer,4);
-    display_goto_xy(0,6);
-    display_string("FOOTER");
+    display_goto_xy(0,FOOTER);
+    display_string("---");
+    display_int(g_dbg1,4);
+    display_string(",");
+    display_int(g_dbg2,4);
     display_update();
     sig_sem(Sdisp);
     dly_tsk(5);
@@ -477,7 +551,7 @@ SensTsk(VP_INT exinf)
 */
 void MuscTsk(VP_INT exinf){
   for (;;) {
-    play_notes(TIMING_chiba_univ, 8, chiba_univ);
+    play_notes(TIMING_chiba_univ, 8, i_j);
   }
 }
 
@@ -495,8 +569,8 @@ void jsp_systick_low_priority(void)
 //システムの初期化時に呼ばれるもの
 void ecrobot_device_initialize(void)
 {
-  nxt_motor_set_speed(Rmotor, 0, 0);
-  nxt_motor_set_speed(Lmotor, 0, 0);
+  nxt_motor_set_speed(Rmotor, 0, 1);
+  nxt_motor_set_speed(Lmotor, 0, 1);
   ecrobot_init_nxtcolorsensor(Color, NXT_COLORSENSOR);
   
 }

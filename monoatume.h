@@ -10,7 +10,6 @@
 # define motor_set_speed(M, P, F)	nxt_motor_set_speed((M), (P), (F))
 #endif
 
-
 #ifndef _MACRO_ONLY
 
 #include "ecrobot_interface.h" 
