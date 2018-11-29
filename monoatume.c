@@ -89,7 +89,6 @@ void func_calib(){
   int rot=0;
   //色のカリブレーション
   //アームのカリブレーション
-  //しくじった　どっちが上かわからん
   motor_set_speed(Arm,-ARM_POWER,1);
   LogString("Arm Up");
   for(;;){
@@ -299,7 +298,7 @@ FLGPTN MoveLength(int pow,int turn,int length){
 void MoveArm(int deg){
   //現在のアームの状態から何度曲げるかを指定
   /* int ini=nxt_motor_get_count(Arm); */
-  /* int  */
+  /* int */
   /* for(;;){ */
   /*   motor_set_power(Arm,ARM_POWER,1); */
   /*   if() */
@@ -323,13 +322,6 @@ void InitTsk(VP_INT exinf){
   act_tsk(Tmain);
   act_tsk(Tdisp);
 }
-
-/*
-  ButtonTsk
-  ボタン更新などなど
-*/
-//やはり意味がないと判断し削除しました
-//タッチセンサのフラグはSensTskで制御します
 
 /*
   MainTsk
@@ -430,6 +422,9 @@ void MoveTsk(VP_INT exinf){
       //turnが90ならvalが10になったときにerror=0
       error=(100-turn)-val;
     }
+    /*これだ！*/
+    if(g_power<0)//逆進行時はちゃんと逆に進む
+      error=-error;
     error_i+=error;
     error_d-=error;
     
