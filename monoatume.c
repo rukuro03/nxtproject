@@ -32,6 +32,7 @@ void MoveSetPower(int);
 void MoveSetSteer(int);
 void MoveActivate();
 void MoveTerminate();
+void LogScreen(char*,int,int);
 void CheckLenght(int);
 void SetTimeOut(int);
 FLGPTN WaitForOR(FLGPTN);
@@ -84,7 +85,7 @@ void func_calib(){
   motor_set_speed(Arm,10,0);
   for(;;){
     dly_tsk(10);
-    rot=nxt_motor_get_count();
+    rot=nxt_motor_get_count(Arm);
     if(rot-prev_rot<1){
       nxt_motor_set_count(Arm,0);//一番上に上げた状態でカウントを0にする
       break;
@@ -94,7 +95,7 @@ void func_calib(){
   motor_set_speed(Arm,-10,0);
   for(;;){
     dly_tsk(10);
-    rot=nxt_motor_get_count();
+    rot=nxt_motor_get_count(Arm);
     if(rot-prev_rot<1){
       g_armdown=rot;
       break;
@@ -106,8 +107,10 @@ void func_calib(){
 void strategy(){
   //機能テスト用に適当に動作を指定しました
   //しばらくまっすぐすすんで
+  LogScreen("Start",1,2);
   MoveLength(40,0,1000);
   //右に回って
+  LogScreen("Turn right",1,3);
   MoveLength(100,200,1000);
   //左に回って
   MoveLength(100,-200,1000);
@@ -120,10 +123,8 @@ void strategy(){
 
 void func_menu(){
   NameFunc MainMenu[] = {
-    {"Start", NULL},//選択された関数を開始
     {"Calibration", func_calib},// センサーのキャリブレーション
-    {"SetStrategy",strategy},
-    {"Exit", ecrobot_restart_NXT},// OSの制御に戻る
+    {"Start",strategy},
     {"Power Off", ecrobot_shutdown_NXT},// 電源を切る
   };
   int cnt=ARRAYSIZE(MainMenu);
@@ -131,32 +132,34 @@ void func_menu(){
   nxtButton btn;
   static int menu = 0;
   for (;;) {
+    wait_for_release();
     wai_sem(Sdisp);//ディスプレイの占有権待ち
     display_clear(0);
     for (i = 0; i < cnt; i++) {
       if (i == menu) {
-        nxt_display_dish(nxt_display_set, 6, i * 8 + 3, 3);
+	display_goto_xy(1,i+1);
+	display_string(">");
       }
       display_goto_xy(2, i+1);
       display_string(MainMenu[i].name);
     }
+    display_update();
     sig_sem(Sdisp);//ディスプレイの占有権返却
     btn = get_btn();
     switch (btn) {
     case Obtn:	// オレンジボタン == 選択
-      if (MainMenu[menu].func == NULL)
-	return;
       g_function=MainMenu[menu].func;
-      continue;
+      return;
     case Cbtn:	// グレーボタン == キャンセル
-      continue;
+      ecrobot_shutdown_NXT();
+      break;
     case Rbtn:	// 右ボタン == 次へ
       menu++;
-      if (menu >= cnt) menu = 1;
+      if (menu >= cnt) menu = 0;
       continue;
     case Lbtn:	// 左ボタン == 前へ
       --menu;
-      if (menu <= 0) menu = cnt - 1;
+      if (menu < 0) menu = cnt-1;
       continue;
     default:	// 複数が押されている場合
       continue;
@@ -169,8 +172,8 @@ void func_menu(){
 void MoveSetPower(int pow){
   //パワーの登録…とはいえ、g_powに代入するだけです
   g_power=pow;
-  motor_set_speed(Rmotor,pow);
-  motor_set_speed(Lmotor,pow);
+  motor_set_speed(Rmotor,pow,0);
+  motor_set_speed(Lmotor,pow,0);
 }
 void MoveSetSteer(int turn){
   //ステアリングの登録…とはいえ、g_turnに代入するだけです
@@ -193,6 +196,13 @@ void MoveTerminate(){
   ter_tsk(Tmove);
   MoveSetPower(0);
   MoveSetSteer(0);  
+}
+
+void LogScreen(char* str,int x,int y){
+  wai_sem(Sdisp);
+  display_goto_xy(x,y);
+  display_string(str);
+  sig_sem(Sdisp);
 }
 
 void CheckLength(int length){
@@ -231,8 +241,8 @@ FLGPTN MoveLength(int pow,int turn,int length){
   //turnの値は「外側のタイヤに対し内側のタイヤは(100-turn%)回る」という意味
   //turnがマイナスだと右が外側左が内側
   //turnがプラスだと左が外側右が内側
-  MovePower(power);
-  MoveSteer(turn);
+  MoveSetPower(pow);
+  MoveSetSteer(turn);
   CheckLength(length);
   MoveActivate();
   /*
@@ -261,7 +271,6 @@ void InitTsk(VP_INT exinf){
   display_goto_xy(2, 3);
   display_string("Initializing");
   display_update();
-  act_tsk(Tbutton);
   act_tsk(Tmain);
   act_tsk(Tdisp);
 }
@@ -280,6 +289,7 @@ void InitTsk(VP_INT exinf){
 void MainTsk(VP_INT exinf){
   func_menu();
   act_tsk(Tfunc);
+  act_tsk(Tquit);
 }
 
 /*
@@ -308,6 +318,9 @@ void QuitTsk(VP_INT exinf){
   元々のMoveTskに近い
 */
 void FuncTsk(VP_INT exinf){
+  wai_sem(Sdisp);
+  display_clear(0);
+  sig_sem(Sdisp);
   (*g_function)();
   for(;;){
     display_goto_xy(2, 3);
@@ -383,7 +396,7 @@ void TimerTsk(VP_INT exinf){
 */
 void CheckTsk(VP_INT exinf){
   DeviceConstants master,slave;
-  int move=0,rot=0;
+  int rot=0;
   get_master_slave(&master,&slave);
   int rot_p=nxt_motor_get_count(master);
   
@@ -444,7 +457,6 @@ void DispTsk(VP_INT exinf){
 void
 SensTsk(VP_INT exinf)
 {
-  int touch;
   for (;;) {
     ecrobot_process_bg_nxtcolorsensor();
     if(ecrobot_get_touch_sensor(Rtouch))
