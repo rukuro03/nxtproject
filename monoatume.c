@@ -14,7 +14,8 @@
 #define ARRAYSIZE(A)	(sizeof((A)) / sizeof((A)[0]))
 #define MACHINE_NAME "GOHAN"
 #define TIME_LEFT 180
-#define WHEEL_RADIUS 30 
+#define WHEEL_RADIUS 30
+#define SHAFT_LENGTH 300
 #define MOVETSK_WAIT 200
 #define ARM_POWER_UP -30
 #define ARM_POWER_DOWN 30
@@ -45,6 +46,7 @@ void SetTimeOut(int);
 FLGPTN WaitForOR(FLGPTN);
 FLGPTN WaitForAND(FLGPTN);
 FLGPTN MoveLength(int,int,int);
+FLGPTN MoveTurn(int,int,DeviceConstants);
 void MoveArm(int);
 
 //グローバル変数群　できれば使いたくないが組み込みだからね
@@ -297,6 +299,17 @@ FLGPTN MoveLength(int pow,int turn,int length){
   sensor=WaitForOR(efEndMove | efTOMove | efRtouch | efLtouch);
   MoveTerminate();
   return sensor;
+}
+
+FLGPTN MoveTurn(int pow,int turn,DeviceConstants slave){
+  //パワー・旋回角度・内側のモータを指定して信地旋回します
+  
+  //外側のモータが進まないと行けない距離 タイヤ間距離を半径とする円周
+  int length=SHAFT_LENGTH*2*3.14*turn/360;
+  if(slave==Rmotor)//右回転
+    return MoveLegth(pow,100,length);
+  else //左回転
+    return MoveLegth(pow,-100,length);
 }
 
 void MoveArm(int deg){
