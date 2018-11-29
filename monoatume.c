@@ -16,7 +16,8 @@
 #define TIME_LEFT 180
 #define WHEEL_RADIUS 30 
 #define MOVETSK_WAIT 200
-#define ARM_POWER 30
+#define ARM_POWER_UP -30
+#define ARM_POWER_DOWN 30
 //ヘッダー・フッター位置 
 #define HEADER 0
 #define FOOTER 7
@@ -49,7 +50,7 @@ void MoveArm(int);
 //グローバル変数群　できれば使いたくないが組み込みだからね
 //グローバル変数には g_ のプレフィックスをつけてください
 int g_timer,g_power,g_turn,g_length;
-int g_armdown;
+int g_armup=90;
 int g_timeout;
 int g_dbg1=0,g_dbg2=0;
 double g_pgain=1,g_igain=1,g_dgain=1;
@@ -89,20 +90,7 @@ void func_calib(){
   int rot=0;
   //色のカリブレーション
   //アームのカリブレーション
-  motor_set_speed(Arm,-ARM_POWER,1);
-  LogString("Arm Up");
-  for(;;){
-    rot=nxt_motor_get_count(Arm);
-    dly_tsk(1000);
-    rot-=nxt_motor_get_count(Arm);
-    if(rot<0)
-      rot=-rot;
-    if(rot<1){
-      nxt_motor_set_count(Arm,0);//一番上に上げた状態でカウントを0にする
-      break;
-    }
-  }
-  motor_set_speed(Arm,ARM_POWER,1);
+  motor_set_speed(Arm,ARM_POWER_DOWN,1);
   LogString("Arm Down");
   for(;;){
     rot=nxt_motor_get_count(Arm);
@@ -111,11 +99,23 @@ void func_calib(){
     if(rot<0)
       rot=-rot;
     if(rot<1){
-      g_armdown=nxt_motor_get_count(Arm);
+      nxt_motor_set_count(Arm,0);//一番上に上げた状態でカウントを0にする
+    }
+  }
+  motor_set_speed(Arm,ARM_POWER_UP,1);
+  LogString("Arm Up");
+  for(;;){
+    rot=nxt_motor_get_count(Arm);
+    dly_tsk(1000);
+    rot-=nxt_motor_get_count(Arm);
+    if(rot<0)
+      rot=-rot;
+    if(rot<1){
+      g_armup=nxt_motor_get_count(Arm);
       break;
     }
   }
-  LogString("End");
+  MoveArm(0);
   motor_set_speed(Arm,0,1);
 }
 
@@ -137,8 +137,8 @@ void strategy(){
   MoveLength(-20,0,100);
   LogString("and forth");
   MoveLength(20,0,100);
-  //アームを下ろす
-  MoveArm(g_armdown);
+  //アームを上げる
+  MoveArm(g_armup);
 }
 
 void func_menu(){
@@ -219,6 +219,10 @@ void MoveTerminate(){
   MoveSetSteer(0);  
 }
 
+/*
+  ログ出力系関数
+  ディスプレイの占有権を待つので恐らく優先度逆転が起こります。
+*/
 void ClearLog(){
   g_log=HEADER+1;
   wai_sem(Sdisp);
@@ -296,15 +300,34 @@ FLGPTN MoveLength(int pow,int turn,int length){
 }
 
 void MoveArm(int deg){
-  //現在のアームの状態から何度曲げるかを指定
-  /* int ini=nxt_motor_get_count(Arm); */
-  /* int */
-  /* for(;;){ */
-  /*   motor_set_power(Arm,ARM_POWER,1); */
-  /*   if() */
-  /*   dly_tsk(10); */
-  /* } */
-  /* motor_set_power(Arm,0,1); */
+  //最も下げたアームから何度上に曲げるかを指定
+  
+  //壊れないように領域設定
+  if(deg>g_armup)
+    deg=g_armup;
+  if(deg<0)
+    deg=0;
+  //多分上下思ってるのと逆なので
+  deg=-deg;
+  if(nxt_motor_get_count(Arm)<deg){
+    //今のアーム位置よりも上げなければいけない時
+    motor_set_power(Arm,ARM_POWER_UP,1);
+    for(;;){
+      if(nxt_motor_get_count(Arm)>deg)
+	break;
+      dly_tsk(10);
+    }
+  }
+  else{
+    //今のアーム位置よりも下げなければいけない時
+    motor_set_power(Arm,ARM_POWER_DOWN,1);
+    for(;;){
+      if(nxt_motor_get_count(Arm)<deg)
+	break;
+      dly_tsk(10);
+    }
+  }
+  motor_set_power(Arm,0,1);
 }
 
 //タスク用関数群
@@ -347,7 +370,7 @@ void QuitTsk(VP_INT exinf){
       //うーん　起動されるかされないかわからないタスクが多いんですが、
       //それも無理やりter_tskしてます。果たしてうまくいくかどうか
       ter_tsk(Tfunc);
-      ter_tsk(Ttimer);
+      ter_tsk(Tcheck);
       ter_tsk(Ttimeout);
       ter_tsk(Tmusc);
       MoveTerminate();
