@@ -1,4 +1,8 @@
-
+/*
+  コンフィギュレータに読み込ませるためのファイル
+  実際このファイルをincludeすればほとんどの関数が使える
+  (t_service.h monoatume.h ecrobot_interface.h)
+*/
 #ifndef MONOATUME_CFG_H
 #define MONOATUME_CFG_H
 

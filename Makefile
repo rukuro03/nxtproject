@@ -11,15 +11,20 @@
 #	その影響でmakeできなくなるかもしれない。多分大丈夫だけど！
 #	その場合元のMakefileを回収してきて、monoatumeをjougaに直せば問題ないはず。
 
+#	12/5 適当にファイル分割しました
+#	その影響でコンパイルエラーが出るかもしれない…頑張ったけど
+
 # Target specific macros
 TARGET = monoatume
 TARGET_SOURCES = \
 	monoatume.c \
-	music.c button.c display.c graphics.c
+	music.c button.c display.c graphics.c \
+	Task.c Log.c Move.c Arm.c
 TOPPERS_JSP_CFG_SOURCE = ./monoatume.cfg
 TARGET_HEADERS = \
 	monoatume.h \
-	monoatume_cfg.h music.h button.h display.h graphics.h
+	monoatume_cfg.h music.h button.h display.h graphics.h \
+	Log.h Move.h Arm.h 
 FIRMWARE = c:/cygwin/nexttool/lms_arm_nbcnxc_128.rfw
 
 # ここから先は、内容を理解してから変更してください
@@ -48,9 +53,14 @@ music	: music.c
 
 #### 依存関係の指定
 #### Dependencies
-monoatume.o	: monoatume.h monoatume_cfg.h music.h button.h graphics.h display.h
+monoatume.o	: $(TARGET_HEADERS)
 button.o	: button.h
-music.o		:
+music.o		: 
 kernel_cfg.c	: monoatume_cfg.h monoatume.h
 display.o	: display.h
 graphics.o	: graphics.h display.h
+Log.o		: Log.h
+Arm.o		: Arm.h
+Move.o		: Move.h
+Task.o		:
+# 上記適当に変えました　悪い意味の適当です。

@@ -11,3 +11,10 @@
 !monoatume_cfg.h
 !monoatume.h
 !monoatume.c
+!Arm.h
+!Arm.c
+!Log.h
+!Log.c
+!Move.h
+!Move.c
+!Task.c	
