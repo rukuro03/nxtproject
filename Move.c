@@ -88,7 +88,7 @@ void MoveTsk(VP_INT exinf){
       error=(100-turn)-val;
     }
     /*これだ！*/
-    if(power<0)//逆進行時はちゃんと逆に進む
+    if(power<0 || turn>100)//逆進行時はちゃんと逆に進む
       error=-error;
     error_i+=error;
     error_d-=error;
