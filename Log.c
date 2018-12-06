@@ -29,7 +29,7 @@ void DisplayLog(){
 
 void LogString(char* str){
   int i;
-  if(g_logs==LOGNUM){
+  if(g_logs==LOGNUM-1){
     for(i=0;i<LOGNUM-1;i++){
       g_logitem[i]=g_logitem[i+1];
     }
