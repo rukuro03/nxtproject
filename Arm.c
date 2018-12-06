@@ -61,11 +61,12 @@ void CalibArm(){
     rot-=nxt_motor_get_count(Arm);
     if(rot<0)
       rot=-rot;
+    LogInt(rot,4);
     if(rot<1){
       g_armup=nxt_motor_get_count(Arm);
       break;
     }
   }
-  MoveArm(0);
+  MoveArm(ARMDOWN);
   motor_set_speed(Arm,0,1);
 }
