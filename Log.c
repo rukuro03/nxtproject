@@ -29,7 +29,7 @@ void DisplayLog(){
 
 void LogString(char* str){
   int i;
-  if(g_logs==LOGNUM-1){
+  if(g_logs==LOGNUM){
     for(i=0;i<LOGNUM-1;i++){
       g_logitem[i]=g_logitem[i+1];
     }
@@ -44,7 +44,7 @@ void LogString(char* str){
 
 void LogInt(int dat){
   wai_sem(Sdisp);
-  display_goto_xy(2,LOGNUM+1);
+  display_goto_xy(2,LOGINT);
   display_string("LOG_VAR:");
   display_int(dat,4);
   sig_sem(Sdisp);
