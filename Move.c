@@ -10,7 +10,7 @@
 
 //グローバル変数
 static int g_power,g_turn,g_length;
-static double g_pgain=3,g_igain=5,g_dgain=2;
+static double g_pgain=3,g_igain=2,g_dgain=2;
 // グローバル変数のゲッターです
 int GetPower(){
   return g_power;
@@ -56,6 +56,7 @@ void MoveTsk(VP_INT exinf){
   int cur_spow;//current slave power
   double pgain=GetPgain(),dgain=GetDgain(),igain=GetIgain();
   double val,error=0,error_d=0,error_i=0;
+  int ireset=0;
   if(turn<0)
     turn=-turn;
   //turnの値は「外側のタイヤに対し内側のタイヤは(100-turn)%回る」という意味
@@ -99,6 +100,11 @@ void MoveTsk(VP_INT exinf){
     cur_spow+=power/100;
     motor_set_speed(slave,cur_spow, 1);
     LogInt(cur_spow);
+    ireset+=MOVETSK_WAIT;
+    if(ireset>2000){
+      error_i=0;
+      ireset=0;
+    }
   }
 }
 
