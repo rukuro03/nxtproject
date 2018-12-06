@@ -9,7 +9,7 @@
 #include "music.h"
 #include "graphics.h"
 #include "Move.h"
-
+#include "Log.h"
 //外部で定義される関数の宣言
 void func_menu();//monoatume.cで定義される
 
@@ -57,6 +57,7 @@ void QuitTsk(VP_INT exinf){
       ter_tsk(Tcheck);
       ter_tsk(Ttimeout);
       ter_tsk(Tmusc);
+      ClearLog();
       MoveTerminate();
       act_tsk(Tmain);
     }
