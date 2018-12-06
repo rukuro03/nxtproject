@@ -6,6 +6,7 @@
 #include "kernel_id.h" //タスクIDが必要
 #include "Move.h"
 #include "monoatume_cfg.h"
+#include "Log.h"
 
 //グローバル変数
 static int g_power,g_turn,g_length;
@@ -102,6 +103,7 @@ void MoveTsk(VP_INT exinf){
     ireset++;
     if(ireset*MOVETSK_WAIT>2000)
       error_i=0;      //I部分のリセット
+    LogInt(cur_spow);
   }
 }
 
@@ -205,3 +207,6 @@ FLGPTN WaitForAND(FLGPTN flg){
   wai_flg(Fsens,flg,TWF_ANDW,&sensor);
   return sensor;
 }
+
+
+
