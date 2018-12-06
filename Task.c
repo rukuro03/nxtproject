@@ -8,7 +8,6 @@
 #include "button.h"
 #include "music.h"
 #include "graphics.h"
-#include "Move.h"
 
 //外部で定義される関数の宣言
 void func_menu();//monoatume.cで定義される
@@ -174,16 +173,30 @@ void DispTsk(VP_INT exinf){
 void
 SensTsk(VP_INT exinf)
 {
+  //タッチセンサが押されたら、次離されるまでフラグは立たない
+  int rrel=0,lrel=0;
   for (;;) {
     ecrobot_process_bg_nxtcolorsensor();
-    if(ecrobot_get_touch_sensor(Rtouch))
-      set_flg(Fsens,efRtouch);
-    else
+    if(ecrobot_get_touch_sensor(Rtouch)){
+      if(rrel==0){
+	set_flg(Fsens,efRtouch);
+	rrel=1;
+      }
+    }
+    else{
       clr_flg(Fsens,!efRtouch);
-    if(ecrobot_get_touch_sensor(Ltouch))
-      set_flg(Fsens,efLtouch);
-    else
+      rrel=0;
+    }
+    if(ecrobot_get_touch_sensor(Ltouch)){
+      if(rrel==0){
+	set_flg(Fsens,efLtouch);
+	lrel=1;
+      }
+    }
+    else{
       clr_flg(Fsens,!efLtouch);
+      lrel=0;
+    }
     dly_tsk(2);
   }
 }

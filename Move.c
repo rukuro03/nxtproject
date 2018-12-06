@@ -9,7 +9,7 @@
 
 //グローバル変数
 static int g_power,g_turn,g_length;
-static double g_pgain=1,g_igain=1,g_dgain=1;
+static double g_pgain=2,g_igain=1,g_dgain=1;
 
 // グローバル変数のゲッターです
 int GetPower(){
