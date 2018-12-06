@@ -54,6 +54,7 @@ void MoveTsk(VP_INT exinf){
   int mrot,srot;
   int turn=GetTurn(),power=GetPower();
   int cur_spow;//current slave power
+  int ireset=0;
   double pgain=GetPgain(),dgain=GetDgain(),igain=GetIgain();
   double val,error=0,error_d=0,error_i=0;
   if(turn<0)
@@ -99,6 +100,9 @@ void MoveTsk(VP_INT exinf){
     power+=dgain*error_d;
     cur_spow+=power/100;
     motor_set_speed(slave,cur_spow, 1);
+    ireset++;
+    if(ireset*MOVETSK_WAIT>2000)
+      error_i=0;      //I部分のリセット
   }
 }
 
