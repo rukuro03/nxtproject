@@ -39,6 +39,7 @@ void LogString(char* str){
     g_logitem[g_logs]=str;
     g_logs++;
   }
+  DisplayLog();
 }
 
 void LogInt(int dat){
