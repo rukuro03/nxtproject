@@ -50,6 +50,7 @@ void CalibArm(){
       rot=-rot;
     if(rot<1){
       nxt_motor_set_count(Arm,0);//一番下に下げた状態でカウントを0にする
+      break;
     }
   }
   motor_set_speed(Arm,ARM_POWER_UP,1);
