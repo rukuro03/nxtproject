@@ -14,14 +14,12 @@ void MoveArm(int mode){
   else{
     deg=0;
   }
-  if(deg<0)  //多分上に上げるとマイナスなので
-    deg=-deg;
   
-  if(nxt_motor_get_count(Arm)<deg){
+  if(nxt_motor_get_count(Arm)>deg){
     //今のアーム位置よりも上げなければいけない時
     motor_set_speed(Arm,ARM_POWER_UP,1);
     for(;;){
-      if(nxt_motor_get_count(Arm)>deg)
+      if(nxt_motor_get_count(Arm)<deg)
 	break;
       dly_tsk(10);
     }
@@ -30,7 +28,7 @@ void MoveArm(int mode){
     //今のアーム位置よりも下げなければいけない時
     motor_set_speed(Arm,ARM_POWER_DOWN,1);
     for(;;){
-      if(nxt_motor_get_count(Arm)<deg)
+      if(nxt_motor_get_count(Arm)>deg)
 	break;
       dly_tsk(10);
     }
@@ -61,12 +59,13 @@ void CalibArm(){
     rot-=nxt_motor_get_count(Arm);
     if(rot<0)
       rot=-rot;
-    LogInt(rot,4);
+    LogInt(rot);
     if(rot<1){
       g_armup=nxt_motor_get_count(Arm);
       break;
     }
   }
-  MoveArm(ARMDOWN);
+  LogString("Arm Down");
+  MoveArm(ARM_DOWN);
   motor_set_speed(Arm,0,1);
 }

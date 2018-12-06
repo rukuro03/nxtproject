@@ -40,25 +40,25 @@ void func_calib(){
 }
 
 void strategy(){
+  FLGPTN flg;
+
   //機能テスト用に適当に動作を指定しました
   //しばらくまっすぐすすんで
   act_tsk(Ttimer);
   act_tsk(Tmusc);
   LogString("Start");
-  MoveLength(40,0,100);
-  //右に回って
+  flg = MoveLength(40,0,100);
   LogString("Turn right");
-  MoveLength(50,200,100);
-  //左に回って
+  flg = MoveLength(50, 200, 100);
   LogString("Turn left");
-  MoveLength(50,-200,100);
+  flg = MoveLength(50,-200,100);
   //前後にぷるぷる
   LogString("Go back");
-  MoveLength(-20,0,100);
+  flg = MoveLength(-20,0,100);
   LogString("and forth");
-  MoveLength(20,0,100);
+  flg = MoveLength(20,0,100);
   //アームを上げる
-  MoveArm(ARM_DOWN);
+  MoveArm(ARM_UP);
 }
 
 void func_menu(){

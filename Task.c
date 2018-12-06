@@ -8,6 +8,7 @@
 #include "button.h"
 #include "music.h"
 #include "graphics.h"
+#include "Move.h"
 
 //外部で定義される関数の宣言
 void func_menu();//monoatume.cで定義される
