@@ -64,6 +64,8 @@ typedef enum{
 //ヘッダー・フッター位置 
 #define HEADER 0
 #define FOOTER 7
+//ログ総数
+#define LOGNUM FOOTER-HEADER-2//最下段に数値
 //置き場所に困ったのでここで宣言します　定義はTask.c内です
 void SetTimeOut(int);
 #endif
