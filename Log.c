@@ -4,6 +4,7 @@
 */
 #include "display.h"
 #include "monoatume_cfg.h"
+#include "kernel_id.h"
 
 int g_log=HEADER+1;
 

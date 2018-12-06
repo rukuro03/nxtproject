@@ -4,7 +4,8 @@
 #ifndef MOVE_H
 #define MOVE_H
 
-#include "monoatume.h" //DeviceConstantsがいるから 今後変えようかな
+#include "monoatume_cfg.h" //DeviceConstantsがいるから 今後変えようかな
+
 int GetPower();
 int GetTurn();
 int GetLength();

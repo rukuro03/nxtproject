@@ -3,6 +3,7 @@
 */
 
 #include "kernel_id.h" //タスクIDが必要
+#include "Move.h"
 #include "monoatume_cfg.h"
 
 //グローバル変数
@@ -120,9 +121,9 @@ FLGPTN MoveTurn(int pow,int turn,DeviceConstants slave){
   //外側のモータが進まないと行けない距離 タイヤ間距離を半径とする円周
   int length=SHAFT_LENGTH*2*3.14*turn/360;
   if(slave==Rmotor)//右回転
-    return MoveLegth(pow,100,length);
+    return MoveLength(pow,100,length);
   else //左回転
-    return MoveLegth(pow,-100,length);
+    return MoveLength(pow,-100,length);
 }
 
 FLGPTN WaitForOR(FLGPTN flg){

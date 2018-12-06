@@ -23,7 +23,6 @@ void strategy();
 //グローバル変数群　できれば使いたくないが組み込みだからね
 //グローバル変数には g_ のプレフィックスをつけてください
 NameFunc g_MainMenu[] = {
-  {"countdbg",DEBUG_count},
   {"Start",strategy},
   {"Calibration", func_calib},// センサーのキャリブレーション
   {"Power Off", ecrobot_shutdown_NXT},// 電源を切る
