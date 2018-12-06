@@ -21,6 +21,7 @@ void MoveSetSteer(int);
 void MoveActivate();
 void MoveTerminate();
 FLGPTN MoveLength(int,int,int);
+FLGPTN MLIgnoreTouch(int,int,int);
 FLGPTN MoveTurn(int,int,DeviceConstants);//今後これがintだけになるかも
 void CheckLength(int);
 void SetTimeOut(int);

@@ -182,6 +182,25 @@ FLGPTN MoveLength(int pow,int turn,int length){
   return sensor;
 }
 
+FLGPTN MLIgnoreTouch(int pow,int turn,int length){
+  FLGPTN sensor;
+  //turn:-200~200
+  //turnの値は「外側のタイヤに対し内側のタイヤは(100-turn%)回る」という意味
+  //turnがマイナスだと右が外側左が内側
+  //turnがプラスだと左が外側右が内側
+  MoveSetPower(pow);
+  MoveSetSteer(turn);
+  CheckLength(length);
+  MoveActivate();
+  /*
+    完了/時間切れ/左右どちらかのタッチセンサが押される
+    のいずれかまで待つ
+  */
+  sensor=WaitForOR(efEndMove | efTOMove);
+  MoveTerminate();
+  return sensor;
+}
+
 FLGPTN MoveTurn(int pow,int turn,DeviceConstants slave){
   //パワー・旋回角度・内側のモータを指定して信地旋回します
   
