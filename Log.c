@@ -49,3 +49,4 @@ void LogInt(int dat){
   display_int(dat,4);
   sig_sem(Sdisp);
 }
+
