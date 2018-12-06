@@ -10,7 +10,7 @@
 
 //グローバル変数
 static int g_power,g_turn,g_length;
-static double g_pgain=2,g_igain=1,g_dgain=1;
+static double g_pgain=3,g_igain=5,g_dgain=2;
 // グローバル変数のゲッターです
 int GetPower(){
   return g_power;
@@ -54,7 +54,6 @@ void MoveTsk(VP_INT exinf){
   int mrot,srot;
   int turn=GetTurn(),power=GetPower();
   int cur_spow;//current slave power
-  int ireset=0;
   double pgain=GetPgain(),dgain=GetDgain(),igain=GetIgain();
   double val,error=0,error_d=0,error_i=0;
   if(turn<0)
@@ -87,7 +86,6 @@ void MoveTsk(VP_INT exinf){
       //turnが90ならvalが10になったときにerror=0
       error=(100-turn)-val;
     }
-    /*これだ！*/
     if(power<0 || turn>100)//逆進行時はちゃんと逆に進む
       error=-error;
     error_i+=error;
@@ -100,9 +98,6 @@ void MoveTsk(VP_INT exinf){
     power+=dgain*error_d;
     cur_spow+=power/100;
     motor_set_speed(slave,cur_spow, 1);
-    ireset++;
-    if(ireset*MOVETSK_WAIT>2000)
-      error_i=0;      //I部分のリセット
     LogInt(cur_spow);
   }
 }
