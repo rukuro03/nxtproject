@@ -48,7 +48,7 @@ typedef enum{
 #define ARRAYSIZE(A)	(sizeof((A)) / sizeof((A)[0]))
 #define MACHINE_NAME "GOHAN"
 //タイマー初期値
-#define TIME_LEFT 180
+#define TIME_LEFT 120
 //車輪半径
 #define WHEEL_RADIUS 30
 //タイヤ間距離

@@ -33,7 +33,7 @@ void LogString(char* str){
     for(i=0;i<LOGNUM-1;i++){
       g_logitem[i]=g_logitem[i+1];
     }
-    g_logitem[g_logs]=str;
+    g_logitem[g_logs-1]=str;
   }
   else{
     g_logitem[g_logs]=str;
