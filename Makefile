@@ -19,12 +19,12 @@ TARGET = monoatume
 TARGET_SOURCES = \
 	monoatume.c \
 	music.c button.c display.c graphics.c \
-	Task.c Log.c Move.c Arm.c
+	Task.c Log.c Move.c Arm.c Menu.c
 TOPPERS_JSP_CFG_SOURCE = ./monoatume.cfg
 TARGET_HEADERS = \
 	monoatume.h \
 	monoatume_cfg.h music.h button.h display.h graphics.h \
-	Log.h Move.h Arm.h 
+	Log.h Move.h Arm.h Menu.h
 FIRMWARE = c:/cygwin/nexttool/lms_arm_nbcnxc_128.rfw
 
 # ここから先は、内容を理解してから変更してください
@@ -61,6 +61,7 @@ display.o	: display.h
 graphics.o	: graphics.h display.h
 Log.o		: Log.h
 Arm.o		: Arm.h
+Menu.o		: Menu.h
 Move.o		: Move.h
 Task.o		:
 # 上記適当に変えました　悪い意味の適当です。

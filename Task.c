@@ -10,12 +10,12 @@
 #include "graphics.h"
 #include "Move.h"
 #include "Log.h"
-//外部で定義される関数の宣言
-void func_menu();//monoatume.cで定義される
+#include "Menu.h"
 
 //グローバル変数
 static int g_timer,g_timeout;
-extern void (*g_function)(void);
+static void (*g_function)(void);
+
 /*
   InitTsk
   初期化
@@ -35,7 +35,7 @@ void InitTsk(VP_INT exinf){
   メニュー起動+選択された関数をタスクとして起動
 */
 void MainTsk(VP_INT exinf){
-  func_menu();
+  g_function=Menu();
   act_tsk(Tfunc);
   act_tsk(Tquit);
 }

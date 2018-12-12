@@ -47,6 +47,8 @@ typedef enum{
 //定義・宣言群
 #define ARRAYSIZE(A)	(sizeof((A)) / sizeof((A)[0]))
 #define MACHINE_NAME "GOHAN"
+//標準パワー?
+#define BASE_POWER 50
 //タイマー初期値
 #define TIME_LEFT 120
 //車輪半径
