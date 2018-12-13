@@ -10,6 +10,7 @@
 !monoatume_cfg.h
 !monoatume.h
 !monoatume.c
+!test/*
 !Task.c
 !Arm.h
 !Arm.c
