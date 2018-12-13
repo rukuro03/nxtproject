@@ -125,6 +125,12 @@ void GetMasterSlave(DeviceConstants* master,DeviceConstants* slave){
 void MoveSetPower(int pow){
   //パワーの登録…とはいえ、g_powに代入するだけです
   g_power=pow;
+  motor_set_speed(Rmotor,pow/4);
+  motor_set_speed(Lmotor,pow/4);
+  dly_tsk(50);
+  motor_set_speed(Rmotor,pow/2);
+  motor_set_speed(Lmotor,pow/2);
+  dly_tsk(50);
   motor_set_speed(Rmotor,pow,1);
   motor_set_speed(Lmotor,pow,1);
 }
