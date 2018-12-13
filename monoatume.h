@@ -52,7 +52,7 @@ typedef enum{
 //タイマー初期値
 #define TIME_LEFT 120
 //車輪半径
-#define WHEEL_RADIUS 30
+#define WHEEL_RADIUS 56
 //タイヤ間距離
 #define SHAFT_LENGTH 125
 //MoveTskの起動周期
