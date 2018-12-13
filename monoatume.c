@@ -38,7 +38,8 @@ void Strategy(){
 
   //ちゃんと集めるやつ
   //赤ボールを取る
-  flg = MoveLength(70, 0, 900);
+  LogString("Red boll");
+  flg = MLIgnoreTouch(70, 0, 900);
   //バックする
   flg = MoveLength(-70, 40, 300);
   //タイヤを取りに行く
@@ -49,7 +50,7 @@ void Strategy(){
   flg = MoveLength(20, 0, 100);
   //方向転換
   MoveArm(ARM_DOWN);
-  flg = MoveLength(70, -200, 80);
+  flg = MoveLength(70, -100, 80);
   //スタート位置に戻る
   flg = MoveLength(70, 0, 500);
 }

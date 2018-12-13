@@ -7,7 +7,7 @@
 
 static int g_armup;//一番上まで上がったときの回転角度
 void MoveArm(int mode){
-  int deg;
+  int deg,rot=0,d_rot;
   if(mode==ARM_UP){
     deg=g_armup;
   }
@@ -19,18 +19,22 @@ void MoveArm(int mode){
     //今のアーム位置よりも上げなければいけない時
     motor_set_speed(Arm,ARM_POWER_UP,1);
     for(;;){
-      if(nxt_motor_get_count(Arm)<deg)
+      d_rot=rot;
+      rot=nxt_motor_get_count(Arm);
+      if(rot<deg || d_rot-rot==0)
 	break;
-      dly_tsk(10);
+      dly_tsk(100);
     }
   }
   else{
     //今のアーム位置よりも下げなければいけない時
     motor_set_speed(Arm,ARM_POWER_DOWN,1);
     for(;;){
-      if(nxt_motor_get_count(Arm)>deg)
+      d_rot=rot;
+      rot=nxt_motor_get_count(Arm);
+      if(rot>deg || d_rot-rot==0)
 	break;
-      dly_tsk(10);
+      dly_tsk(100);
     }
   }
   motor_set_speed(Arm,0,1);

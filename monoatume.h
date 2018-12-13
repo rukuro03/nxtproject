@@ -54,11 +54,11 @@ typedef enum{
 //車輪半径
 #define WHEEL_RADIUS 30
 //タイヤ間距離
-#define SHAFT_LENGTH 300
+#define SHAFT_LENGTH 125
 //MoveTskの起動周期
-#define MOVETSK_WAIT 200
+#define MOVETSK_WAIT 500
 //アームを上げる/下げるときのパワー
-#define ARM_POWER_UP -30
+#define ARM_POWER_UP -50
 #define ARM_POWER_DOWN 30
 //アームを上げるか下げるかの選択
 #define ARM_UP 1

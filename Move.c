@@ -10,7 +10,7 @@
 
 //グローバル変数
 static int g_power,g_turn,g_length;
-static double g_pgain=3,g_igain=2,g_dgain=2;
+static double g_pgain=5,g_igain=5,g_dgain=5;
 // グローバル変数のゲッターです
 int GetPower(){
   return g_power;
@@ -206,7 +206,7 @@ FLGPTN MoveTurn(int pow,int turn,DeviceConstants slave){
   
   //外側のモータが進まないと行けない距離 タイヤ間距離を半径とする円周
   int length=SHAFT_LENGTH*2*3.14*turn/360;
-  if(slave==Rmotor)//右回転
+  if(slave==Lmotor)//右回転
     return MoveLength(pow,100,length);
   else //左回転
     return MoveLength(pow,-100,length);

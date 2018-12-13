@@ -3,6 +3,7 @@
 #include "Menu.h"
 #include "Move.h"
 #include "Arm.h"
+#include "Log.h"
 #include "monoatume.h"
 
 //monoatume.c 内で定義される関数
@@ -92,17 +93,19 @@ void Setting(){
 }
 
 void TestStrategy(){
-  MoveTurn(BASE_POWER,90,Lmotor);
-  /* MoveArm(ARM_UP); */
-  /* MoveLength(BASE_POWER,0,900); */
-  /* MoveArm(ARM_DOWN); */
-  /* MoveLength(-BASE_POWER,0,300); */
-  /* MoveTurn(BASE_POWER,90,Lmotor); */
-  /* MoveArm(ARM_UP); */
-  /* MoveLength(BASE_POWER,0,400); */
-  /* MoveArm(ARM_DOWN); */
-  /* MoveLength(-BASE_POWER,0,200); */
-  /* MoveLength(BASE_POWER,-30,2000); */
+  LogString("Arm up");
+  MoveArm(ARM_UP);
+  LogString("Forward");
+  MoveLength(BASE_POWER,0,900);
+  LogString("Arm down");
+  MoveArm(ARM_DOWN);
+  MoveLength(-BASE_POWER,0,300);
+  MoveTurn(BASE_POWER,90,Rmotor);
+  MoveArm(ARM_UP);
+  MoveLength(BASE_POWER,0,400);
+  MoveArm(ARM_DOWN);
+  MoveLength(-BASE_POWER,0,200);
+  MoveLength(BASE_POWER,-30,2000);
   //適当に作りました
 }
 
