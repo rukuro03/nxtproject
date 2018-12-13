@@ -41,16 +41,17 @@ void Strategy(){
   LogString("Red boll");
   flg = MLIgnoreTouch(70, 0, 900);
   //バックする
-  flg = MoveLength(-70, 40, 300);
+  flg = MoveLength(-70, 40, 290);
   //タイヤを取りに行く
   flg = MoveLength(50, 0, 400);
   //タイヤの前で 3秒停止　アームを上げる　ゆっくり前に進む
-  dly_tsk(3000);
+  dly_tsk(2000);
   MoveArm(ARM_UP);
   flg = MoveLength(20, 0, 100);
   //方向転換
   MoveArm(ARM_DOWN);
-  flg = MoveLength(70, -100, 80);
+  flg = MoveLength(70, -200, 100);
   //スタート位置に戻る
-  flg = MoveLength(70, 0, 500);
+  flg = MLIgnoreTouch(70, 0, 700);
+  flg = MoveLength(-70, 0, 20);
 }
