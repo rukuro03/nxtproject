@@ -7,7 +7,7 @@ typedef struct _NameFunc {
   MFunc func;
 } NameFunc;
 
-typedef struc _SetFunc{
+typedef struct _SetFunc{
   char *name;
   SFunc func;
 } SetFunc;
@@ -15,5 +15,5 @@ typedef struc _SetFunc{
 void Calibration();
 void TestStrategy();
 void Setting();
-MFunc Menu();
+MFunc MenuFunc();
 #endif

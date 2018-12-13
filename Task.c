@@ -35,7 +35,7 @@ void InitTsk(VP_INT exinf){
   メニュー起動+選択された関数をタスクとして起動
 */
 void MainTsk(VP_INT exinf){
-  g_function=Menu();
+  g_function=MenuFunc();
   act_tsk(Tfunc);
   act_tsk(Tquit);
 }

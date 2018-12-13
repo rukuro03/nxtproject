@@ -1,12 +1,14 @@
+#include "kernel_id.h"
+#include "button.h"
 #include "Menu.h"
 #include "Move.h"
+#include "Arm.h"
 #include "monoatume.h"
 
 //monoatume.c 内で定義される関数
 void Strategy(void);
 
 void Calibration(){
-  int rot=0;
   //色のカリブレーション
   //アームのカリブレーション
   CalibArm();
@@ -24,7 +26,7 @@ void Setting(){
     GetDgain()
   };
   int cnt=3;
-  int i,staet=0;
+  int i,state=0;
   nxtButton btn;
   static int menu = 0;
   for (;;) {
@@ -34,7 +36,7 @@ void Setting(){
     for (i = 0; i < cnt; i++) {
       if (i == menu) {
 	display_goto_xy(1,i+HEADER+1);
-	if(state=0)
+	if(state==0)
 	  display_string(">");
 	else
 	  display_string("*");
@@ -54,33 +56,33 @@ void Setting(){
       if(state==0){
 	state=1;
       }
-      else(state==1){
-	  *(SettingMenu[menu].func)(nums[menu]);
-	  state=0;
-	}
+      else{
+	(*SettingMenu[menu].func)(nums[menu]);
+	state=0;
+      }
       break;
     case Cbtn:	// グレーボタン == キャンセル
-      if(state=1)
+      if(state==1)
 	state=0;
       else
 	return;
       break;
     case Rbtn:	// 右ボタン == 次へ
-      if(state=0){
+      if(state==0){
 	menu++;
 	if (menu >= cnt) menu = 0;
       }
       else{
-	num[menu]++;
+	nums[menu]++;
       }
       break;
     case Lbtn:	// 左ボタン == 前へ
-      if(state=0){
+      if(state==0){
 	--menu;
 	if (menu < 0) menu = cnt-1;
       }
       else{
-	num[menu]--;
+	nums[menu]--;
       }
       break;
     default:	// 複数が押されている場合
@@ -90,20 +92,21 @@ void Setting(){
 }
 
 void TestStrategy(){
-  MoveArm(ARM_UP);
-  MoveLength(BASE_POWER,0,900);
-  MoveArm(ARM_DOWN);
-  MoveLength(-BASE_POWER,0,300);
   MoveTurn(BASE_POWER,90,Lmotor);
-  MoveArm(ARM_UP);
-  MoveLength(BASE_POWER,0,400);
-  MoveArm(ARM_DOWN);
-  MoveLength(-BASE_POWER,0,200);
-  MoveLength(BASE_POWER,-30,2000);
+  /* MoveArm(ARM_UP); */
+  /* MoveLength(BASE_POWER,0,900); */
+  /* MoveArm(ARM_DOWN); */
+  /* MoveLength(-BASE_POWER,0,300); */
+  /* MoveTurn(BASE_POWER,90,Lmotor); */
+  /* MoveArm(ARM_UP); */
+  /* MoveLength(BASE_POWER,0,400); */
+  /* MoveArm(ARM_DOWN); */
+  /* MoveLength(-BASE_POWER,0,200); */
+  /* MoveLength(BASE_POWER,-30,2000); */
   //適当に作りました
 }
 
-MFunc Menu(){
+MFunc MenuFunc(){
   //メニュー起動
 
   NameFunc MainMenu[] = {
@@ -152,4 +155,5 @@ MFunc Menu(){
     }
     break;
   }
+  return Strategy;
 }
