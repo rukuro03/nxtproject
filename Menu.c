@@ -92,8 +92,19 @@ void Setting(){
   }
 }
 
+void TestStrategy2(){
+  //青を落とす
+  MoveArm(ARM_UP);
+  MLIgnoreTouch(70, 2, 700);
+  MoveArm(ARM_DOWN);
+  MLIgnoreTouch(-70, 0, 50);
+  MoveArm(ARM_UP);
+  MLIgnoreTouch(-70, 2, 700);
+
+}
+
 void TestStrategy(){
-  LogString("Arm up");
+  /* LogString("Arm up");
   MoveArm(ARM_UP);
   LogString("Forward");
   MoveLength(BASE_POWER,0,900);
@@ -105,8 +116,15 @@ void TestStrategy(){
   MoveLength(BASE_POWER,0,400);
   MoveArm(ARM_DOWN);
   MoveLength(-BASE_POWER,0,200);
-  MoveLength(BASE_POWER,-30,2000);
-  //適当に作りました
+  */
+
+  /*  //赤ボールを取る */
+  /* LogString("Red bull"); */
+  /* MLIgnoreTouch(70, 0, 1100); */
+  /* //バックする */
+  /* MoveLength(-70, 0, 1000); */
+  MLIgnoreTouch(70,0,2000);
+  MLIgnoreTouch(-70,0,2000);
 }
 
 MFunc MenuFunc(){
@@ -115,9 +133,9 @@ MFunc MenuFunc(){
   NameFunc MainMenu[] = {
     {"Calibration", Calibration},// アームのキャリブレーション
     {"Start",Strategy},
-    {"Test",TestStrategy},
+    {"Test1",TestStrategy},
+    {"Test2",TestStrategy2},
     {"Setting",Setting},
-    {"Power Off", ecrobot_shutdown_NXT},// 電源を切る
   };
   
   int cnt=ARRAYSIZE(MainMenu);

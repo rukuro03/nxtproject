@@ -97,9 +97,9 @@ void MoveTsk(VP_INT exinf){
     power+=pgain*error;
     power+=igain*error_i;
     power+=dgain*error_d;
-    cur_spow+=power/100;
+    cur_spow+=power/50;
     motor_set_speed(slave,cur_spow, 1);
-    LogInt(cur_spow);
+    LogInt(error);
     ireset+=MOVETSK_WAIT;
     if(ireset>2000){
       error_i=0;
