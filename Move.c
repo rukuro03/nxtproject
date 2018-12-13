@@ -83,24 +83,27 @@ void MoveTsk(VP_INT exinf){
       //turnが90ならvalが10になったときにerror=0
       error=(100-turn)-val;
     }
-    /* if(power<0 && turn<100) */
-    /*   error=-error; */
-    /* else if(power>=0 && turn>=100) */
-    /*   error=-error; */
 
-    //暴走防止
-    if(error>100) 
-      error=100;
-    if(error<-100)
-      error=-100;
+    //エラーの方向補正
+    if(power<0 && turn<100)
+      error=-error;
+    else if(power>=0 && turn>=100)
+      error=-error;
 
     error_i+=error;
     error_d=error-error_d;
     
+    tmp=0;    
     tmp+=pgain*error;
     tmp+=igain*error_i;
     tmp+=dgain*error_d;
     cur_spow+=tmp/100;
+    // 逆走防止
+    if(isReverse==1 && cur_spow>0)
+      cur_spow=0;
+    if(isReverse==0 && cur_spow<0)
+      cur_spow=0;
+    
     motor_set_speed(slave,cur_spow, 1);
     LogInt(error);
     ireset+=MOVETSK_WAIT;
