@@ -52,7 +52,7 @@ void SetDgain(int dg){
 void MoveTsk(VP_INT exinf){
   DeviceConstants master,slave;
   int mrot,srot;
-  int turn=GetTurn(),power=GetPower();
+  int turn=GetTurn(),power=GetPower(),tmp;
   int cur_spow;//current slave power
   double pgain=GetPgain(),dgain=GetDgain(),igain=GetIgain();
   double val,error=0,error_d=0,error_i=0;
@@ -68,10 +68,6 @@ void MoveTsk(VP_INT exinf){
     dly_tsk(MOVETSK_WAIT);
     mrot=nxt_motor_get_count(master)-mrot;
     srot=nxt_motor_get_count(slave)-srot;
-    if(mrot<0)
-      mrot=-mrot;
-    if(srot<0)
-      srot=-srot;
     //mrotとsrotの比(%)を取る 100*450/900=50
     if(mrot==0)
       mrot=1;
@@ -87,17 +83,24 @@ void MoveTsk(VP_INT exinf){
       //turnが90ならvalが10になったときにerror=0
       error=(100-turn)-val;
     }
-    if(power<0 || turn>100)//逆進行時はちゃんと逆に進む
-      error=-error;
-    error_i+=error;
-    error_d-=error;
-    
-    power=0;
+    /* if(power<0 && turn<100) */
+    /*   error=-error; */
+    /* else if(power>=0 && turn>=100) */
+    /*   error=-error; */
 
-    power+=pgain*error;
-    power+=igain*error_i;
-    power+=dgain*error_d;
-    cur_spow+=power/50;
+    //暴走防止
+    if(error>100) 
+      error=100;
+    if(error<-100)
+      error=-100;
+
+    error_i+=error;
+    error_d=error-error_d;
+    
+    tmp+=pgain*error;
+    tmp+=igain*error_i;
+    tmp+=dgain*error_d;
+    cur_spow+=tmp/100;
     motor_set_speed(slave,cur_spow, 1);
     LogInt(error);
     ireset+=MOVETSK_WAIT;
@@ -125,11 +128,11 @@ void GetMasterSlave(DeviceConstants* master,DeviceConstants* slave){
 void MoveSetPower(int pow){
   //パワーの登録…とはいえ、g_powに代入するだけです
   g_power=pow;
-  motor_set_speed(Rmotor,pow/4);
-  motor_set_speed(Lmotor,pow/4);
+  motor_set_speed(Rmotor,pow/4,1);
+  motor_set_speed(Lmotor,pow/4,1);
   dly_tsk(50);
-  motor_set_speed(Rmotor,pow/2);
-  motor_set_speed(Lmotor,pow/2);
+  motor_set_speed(Rmotor,pow/2,1);
+  motor_set_speed(Lmotor,pow/2,1);
   dly_tsk(50);
   motor_set_speed(Rmotor,pow,1);
   motor_set_speed(Lmotor,pow,1);
