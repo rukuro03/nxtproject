@@ -52,26 +52,33 @@ void SetDgain(int dg){
 void MoveTsk(VP_INT exinf){
   DeviceConstants master,slave;
   int mrot,srot;
-  int turn=GetTurn(),power=GetPower(),tmp;
+  int turn=GetTurn(),power=GetPower(),abspower,tmp,wait;
   int cur_spow;//current slave power
   double pgain=GetPgain(),dgain=GetDgain(),igain=GetIgain();
   double val,error=0,error_d=0,error_i=0;
   int ireset=0;
+  //turnの値は「外側のタイヤに対し内側のタイヤは(100-turn)%回る」という意味
   if(turn<0)
     turn=-turn;
-  //turnの値は「外側のタイヤに対し内側のタイヤは(100-turn)%回る」という意味
+  // 待ち時間はパワーの絶対値に反比例させる
+  wait=10000/power;
+  if(wait<0)
+    wait=-wait;
+
   cur_spow=(100-turn)*power/100.0;
   GetMasterSlave(&master,&slave);
   for(;;){
     mrot=nxt_motor_get_count(master);
     srot=nxt_motor_get_count(slave);
-    dly_tsk(MOVETSK_WAIT);
+    dly_tsk(wait);
     mrot=nxt_motor_get_count(master)-mrot;
     srot=nxt_motor_get_count(slave)-srot;
     //mrotとsrotの比(%)を取る 100*450/900=50
     if(mrot==0)
       mrot=1;
     val=(double)100*srot/mrot;
+    if(val<0)
+      val=-val;
     error_d=error;
     if(turn>100){//信地旋回以上
       //turnが200ならvalが100になったときにerror=0
@@ -85,9 +92,9 @@ void MoveTsk(VP_INT exinf){
     }
 
     //エラーの方向補正
-    if(power<0 && turn<100)
+    if(power<0 && turn<=100)
       error=-error;
-    else if(power>=0 && turn>=100)
+    else if(power>=0 && turn>100)
       error=-error;
 
     error_i+=error;
@@ -106,7 +113,7 @@ void MoveTsk(VP_INT exinf){
     
     motor_set_speed(slave,cur_spow, 1);
     LogInt(error);
-    ireset+=MOVETSK_WAIT;
+    ireset+=wait;
     if(ireset>2000){
       error_i=0;
       ireset=0;
