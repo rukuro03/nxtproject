@@ -1,8 +1,11 @@
-*
+/*
 !.gitignore
 !README.md
+!/test/
 !jouga.c
 !jouga.h
+!color.c
+!color.md
 !memo.md
 !siyou.md
 !yougo.md
@@ -10,7 +13,6 @@
 !monoatume_cfg.h
 !monoatume.h
 !monoatume.c
-!test/*
 !Task.c
 !Arm.h
 !Arm.c
@@ -20,3 +22,4 @@
 !Move.c
 !Menu.c
 !Menu.h
+
