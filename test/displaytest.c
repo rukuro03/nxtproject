@@ -1,13 +1,22 @@
-#include "kernel_id.h"
-#include "button.h"
-#include "Menu.h"
-#include "Move.h"
-#include "Arm.h"
-#include "Log.h"
-#include "monoatume.h"
+/* 
+   NXTのディスプレイ制御を適当にシミュレートしたプログラムです
+   かなりの機能は適当ですので、あくまでコンパイルが通るかどうか、
+   最低限の機構は機能するかくらいのテストしか出来ません。
+   オレンジボタン=y
+   キャンセルボタン=q
+   右ボタン=右矢印
+   左ボタン=左矢印
+   コンパイルコマンド： gcc displaytest.c display.c -lncurses
+   curses.hを使用するので何がしかのcursesライブラリが必要です。
+   Mac・Linuxなら大体ncursesが入っていますが、Windowsの場合
+   余りサポートされていません。CygWinかMinGWを使っていれば
+   コンパイルできるかもしれません。
+*/
+#include "display.h"
+#include "../Menu.h" 
+#include <unistd.h>
 
-static MFunc g_strategy=Strategy;
-static MFunc g_function=Strategy;
+static MFunc g_strategy;
 
 void NormalMenu(NameFunc* MenuList,int cnt){
   //変数を渡す必要の無いメニュー オブジェクト指向が使えないのが不便
@@ -18,8 +27,6 @@ void NormalMenu(NameFunc* MenuList,int cnt){
   static int level=0,canceled=0;
   level++;
   for (;;) {
-    wait_for_release();
-    wai_sem(Sdisp);//ディスプレイの占有権待ち
     display_clear(0);
     for (i = 0; i < cnt; i++) {
       if (i == menu) {
@@ -33,13 +40,14 @@ void NormalMenu(NameFunc* MenuList,int cnt){
       display_string(MenuList[i].name);
     }
     display_update();
-    sig_sem(SDisp);
     btn = get_btn();
     switch (btn) {
     case Obtn:	// オレンジボタン == 選択
       if(MenuList[menu].sub==0){
-	g_function=MenuList[menu].func;
-	Start();
+	//実際はタスク起動
+	End();
+	MenuList[menu].func();
+	Init();
       }
       else{
 	//サブメニュー
@@ -78,7 +86,6 @@ void NormalMenu(NameFunc* MenuList,int cnt){
   }
 }
 
-
 void SetMenu(SetFunc* MenuList,int cnt){
   //変数を渡す必要のあるメニュー 値自体はintになる
   int i,state=0;
@@ -91,8 +98,6 @@ void SetMenu(SetFunc* MenuList,int cnt){
     defs[i]=MenuList[i].def;
   }
   for (;;) {
-    wait_for_release();
-    wai_sem(Sdisp);//ディスプレイの占有権待ち
     display_clear(0);
     for (i = 0; i < cnt; i++) {
       if (i == menu) {
@@ -108,7 +113,6 @@ void SetMenu(SetFunc* MenuList,int cnt){
       display_int(nums[i],4);
     }
     display_update();
-    sig_sem(SDisp);
     btn = get_btn();
     switch (btn) {
     case Obtn:	// オレンジボタン == 選択
@@ -152,88 +156,33 @@ void SetMenu(SetFunc* MenuList,int cnt){
   }
 }
 
-void Calibration(){
-  //色のカリブレーション
-  //アームのカリブレーション
-  CalibArm();
-}
-
-void Run(){
-  act_tsk(Ttimer);
-  act_tsk(Tmusc);
-  (*g_strategy)();  
-}
-
 void Setting(){
   SetFunc SettingMenu[]={
-    {"P_GAIN",SetPgain,GetPgain()},
-    {"I_GAIN",SetIgain,GetIgain()},
-    {"D_GAIN",SetDgain,GetDgain()},
+    {"P_GAIN",DummyInt,ReturnInt()},
+    {"I_GAIN",DummyInt,ReturnInt()},
+    {"D_GAIN",DummyInt,ReturnInt()},
+    {"WAIT",DummyInt,ReturnInt()}
   };
   SetMenu(SettingMenu,ARRAYSIZE(SettingMenu));
 }
 
-void SetNormal(){
-  g_function=Strategy;
-}
-
-void SetRedBall(){
-  g_function=RedBall;
-}
-
-void SetTire(){
-  g_function=Tire;
-}
-
-
 void ChangeStrategy(){
-  NameFunc StrategyMenu[] = {
-    {"Normal",SetNormal},
-    {"RedBall",SetRedBall},
-    {"Tire",SetTire},
-   };
+  NameFunc StrategyMenu[]={
+    {"Normal",Dummy},
+    {"RedBall",Dummy},
+    {"Tire",Dummy},
+  };
   NormalMenu(StrategyMenu,ARRAYSIZE(StrategyMenu));
 }
 
-/*
-  FuncTsk
-  メニュー実行用タスク
-*/
-void FuncTsk(VP_INT exinf){
-  wai_sem(Sdisp);
-  display_clear(0);
-  sig_sem(Sdisp);
-  (*g_function)();
-  Quit();
-}
-
-//テスト関数群
-
-void Credit(){
-  LogString("2018");
-  LogString("cirusmarine1505");
-  dly_tsk(100);
-}
-
-void RunSquare(){
-  int i;
-  for(i=0;i<4;i++){
-    MoveLength(70,0,1000);
-    MoveTurn(70,90,Rmotor);
-  }
-}
-
-void BackForce(){
-  MoveLength(70,0,1000);
-  MoveLength(-70,0,1000);
-}
-
-void Test(){
-  NameFunc TestMenu[]={
-    {"RunSquare",RunSquare},
-    {"Backn'Force",BackForce},
-    {"",Credit,2}
+int main(){
+  NameFunc MainMenu[] = {
+    {"Calibration", Dummy,0},// アームのキャリブレーション
+    {"Start",Dummy,0},
+    {"Setting",Setting,2},
+    {"ChangeStrategy",ChangeStrategy,1},
   };
-  NormalMenu(TestMenu,ARRAYSIZE(TestMenu));
+  Init();
+  NormalMenu(MainMenu,ARRAYSIZE(MainMenu));
+  End();
 }
-

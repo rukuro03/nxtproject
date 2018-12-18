@@ -28,8 +28,8 @@ int main(int argc, char* argv[]){
   if(wait<0)
     wait=-wait;
   
-  Motor master(power,[](int p,int t){return t*p/100;});
-  Motor slave((100-turn)*power/100,[](int p,int t){return t*p/100+p;});
+  Motor master(power,[](int p,int t){return t*900*p/(100*1000);});
+  Motor slave((100-turn)*power/100,[](int p,int t){return t*1000*p/(100*1000);});
   
   cur_spow=(100-turn)*power/100.0;
   if(cur_spow<0)
@@ -70,6 +70,9 @@ int main(int argc, char* argv[]){
     error_d=error-error_d;
     
     cout<<"------"<<endl;
+    cout<<"mrot since start:"<<master.GetRot()<<endl;
+    cout<<"srot since start:"<<slave.GetRot()<<endl;
+    cout<<"srot/mrot since start:"<<(double)slave.GetRot()/master.GetRot()<<endl;
     cout<<"time  :"<<time<<endl;
     cout<<"mrot  :"<<mrot<<",mpow:"<<master.GetPower()<<endl;
     cout<<"srot  :"<<srot<<",spow:"<<slave.GetPower()<<endl;

@@ -14,8 +14,6 @@
 
 //グローバル変数
 static int g_timer,g_timeout;
-static void (*g_function)(void);
-
 /*
   InitTsk
   初期化
@@ -35,9 +33,33 @@ void InitTsk(VP_INT exinf){
   メニュー起動+選択された関数をタスクとして起動
 */
 void MainTsk(VP_INT exinf){
-  g_function=MenuFunc();
+  NameFunc MainMenu[] = {
+    {"Calibration",Calibration,0},
+    {"Run",Run,0},
+    {"Setting",Setting,2},
+    {"ChangeStrategy",ChangeStrategy,1},
+    {"Test",Test,1}
+  };
+  NormalMenu(MainMenu,ARRAYSIZE(MainMenu));
+}
+
+// 実行開始のラッパー
+static void Start(){
+  wai_sem(Sdisp);//ディスプレイの占有権待ち
+  display_clear();
+  sig_sem(Sdisp);
   act_tsk(Tfunc);
   act_tsk(Tquit);
+}
+// 実行終了のラッパー
+static void Quit(){
+  ter_tsk(Tfunc);
+  ter_tsk(Tcheck);
+  ter_tsk(Ttimeout);
+  ter_tsk(Tmusc);
+  ClearLog();
+  MoveTerminate();
+  act_tsk(Tmain);
 }
 
 /*
@@ -51,40 +73,12 @@ void QuitTsk(VP_INT exinf){
   for(;;){
     btn=get_btn();
     if(btn==Cbtn){
-      //うーん　起動されるかされないかわからないタスクが多いんですが、
-      //それも無理やりter_tskしてます。果たしてうまくいくかどうか
-      ter_tsk(Tfunc);
-      ter_tsk(Tcheck);
-      ter_tsk(Ttimeout);
-      ter_tsk(Tmusc);
-      ClearLog();
-      MoveTerminate();
-      act_tsk(Tmain);
+      Quit();
     }
     dly_tsk(20);
   }
 }
 
-/*
-  FuncTsk
-  メニュー実行用タスク
-  元々のMoveTskに近い
-*/
-void FuncTsk(VP_INT exinf){
-  wai_sem(Sdisp);
-  display_clear(0);
-  sig_sem(Sdisp);
-  (*g_function)();
-  wai_sem(Sdisp);
-  display_clear(0);
-  display_goto_xy(2,3);
-  display_string("Press cancel");
-  sig_sem(Sdisp);
-  for(;;){
-    //QuitTskで終了されるのを待つ
-    dly_tsk(20000);
-  }
-}
 
 /*
   TimerTsk
@@ -146,7 +140,6 @@ void SetTimeOut(int time){
   act_tsk(Ttimeout);
 }
 
-
 /*
   DispTsk
   ディスプレイ制御タスク
@@ -170,13 +163,15 @@ void DispTsk(VP_INT exinf){
 /*
   SensTsk
   センサ制御用タスク
-  カラーセンサの調整・タッチセンサ用フラグ
+  常にタッチセンサーとカラーセンサーの
+  状態を感知し、イベントフラグの値を変更する
 */
 void
 SensTsk(VP_INT exinf)
 {
   //タッチセンサが押されたら、次離されるまでフラグは立たない
   int rrel=0,lrel=0;
+  U16 color;
   for (;;) {
     ecrobot_process_bg_nxtcolorsensor();
     if(ecrobot_get_touch_sensor(Rtouch)){
@@ -199,7 +194,35 @@ SensTsk(VP_INT exinf)
       clr_flg(Fsens,!efLtouch);
       lrel=0;
     }
-    dly_tsk(2);
+    
+    color=ecrobot_get_nxtcolorsensor_id(Color);
+    //色IDに応じてフラグを変更する
+    //フラグ自体の定義はmonoatume.hで行う
+    switch(color){
+    case NXT_COLOR_BLACK:
+      set_flg(Fsens,efBlack);
+      break;
+    case NXT_COLOR_BLUE:
+      set_flg(Fsens,efBlue);
+      break;
+    case NXT_COLOR_GREEN:
+      set_flg(Fsens,efGreen);
+    case NXT_COLOR_YELLOW:
+      set_flg(Fsens,efYellow);
+    case NXT_COLOR_ORANGE:
+      set_flg(Fsens,efOrange);
+    case NXT_COLOR_RED:
+      set_flg(Fsens,efRed);
+    case NXT_COLOR_WHITE:
+      set_flg(Fsens,efWhite);
+    default:
+      //未識別色
+      //efUnknownは1110000=色部分をクリアできるよう設定してある
+      clr_flg(Fsens,!efUnknown);
+      break;
+    }
+  }
+  dly_tsk(2);
   }
 }
 

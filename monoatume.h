@@ -1,5 +1,5 @@
 /*
-  全体的で必要な定義を行うファイル
+  全体で必要な定義を行うファイル
 */
 
 #ifndef MONOATUME_H
@@ -30,19 +30,24 @@ typedef enum {
 // イベントフラグ制御用の列挙型
 /*
 SensorFlugs:センサ用フラグ
-色(?bit)>左タッチセンサ>右タッチセンサ>移動タイムアウト>移動到着
+色(3bit)>左タッチセンサ>右タッチセンサ>移動タイムアウト>移動到着
+000000000ccclrta
 */
 typedef enum{
   efEndMove = 1<<0,
   efTOMove = 1<<2,
   efLtouch = 1<<3,
   efRtouch = 1<<4,
+  efBlack = 0x00<<5,
+  efBlue = 0x01<<5,
+  efGreen = 0x02<<5,
+  efYellow = 0x03<<5,
+  efOrange = 0x04<<5,
+  efRed = 0x05<<5,
+  efWhite = 0x06<<5,
+  efUnknown = 0x07<<5
 } SensorFlugs;
 
-typedef enum{
-  Black = 0x00,
-  White = 0xff,
-} Colors;
 
 //定義・宣言群
 #define ARRAYSIZE(A)	(sizeof((A)) / sizeof((A)[0]))
@@ -68,8 +73,14 @@ typedef enum{
 #define LOGNUM FOOTER-HEADER-2
 //数値ログ位置
 #define LOGINT LOGNUM+1
+
+
 //置き場所に困ったのでここで宣言します　定義はTask.c内です
 void SetTimeOut(int);
+//monoatume.cで定義される関数の宣言
+void Strategy();
+void RedBall();
+void Tire();
 #endif
 
 #endif
