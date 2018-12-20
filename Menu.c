@@ -309,7 +309,7 @@ void SyncMotor(){
 void Gentle(){
   MoveArm(ARM_DOWN,30);
   MoveLength(20,0,200);
-  MoveArm(ARM_UP,40);
+  MoveArm(ARM_UP,20);
   dly_tsk(1000);
   MoveLength(-20,0,200);
   MoveArm(ARM_DOWN,10);

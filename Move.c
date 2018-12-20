@@ -242,9 +242,9 @@ FLGPTN MoveTurn(int pow,int turn,DeviceConstants slave){
   
   //外側のモータが進まないと行けない距離 タイヤ間距離を半径とする円周
   int length=(g_shaftlength)*2*3.14*turn/360;
-  if(slave==Lmotor)//右回転
+  if(slave==Lmotor)//時計回り
     return MoveLength(pow,200,length/2);
-  else //左回転
+  else //反時計回り
     return MoveLength(pow,-200,length/2);
 }
 
