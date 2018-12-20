@@ -176,6 +176,8 @@ void Setting(){
     {"P_GAIN",SetPgain,GetPgain()},
     {"I_GAIN",SetIgain,GetIgain()},
     {"D_GAIN",SetDgain,GetDgain()},
+    {"WHEEL",SetWheelRadius,GetWheelRadius()},
+    {"SHAFT",SetShaftLength,GetShaftLength()}
   };
   SetMenu(SettingMenu,ARRAYSIZE(SettingMenu));
 }
@@ -304,11 +306,39 @@ void SyncMotor(){
   motor_set_speed(Lmotor, 0, 1);
 }
 
+void Gentle(){
+  MoveArm(ARM_DOWN,30);
+  MoveLength(20,0,200);
+  MoveArm(ARM_UP,40);
+  dly_tsk(1000);
+  MoveLength(-20,0,200);
+  MoveArm(ARM_DOWN,10);
+}
+
+void CountArm(){
+  int rot;
+  nxt_motor_set_count(Arm,0);//一番下に下げた状態でカウントを0にする
+  for(;;){
+    rot=nxt_motor_get_count(Arm);
+    LogInt(rot);
+    dly_tsk(10);
+  }
+}
+
+void Test2(){
+  NameFunc TestMenu[]={
+    {"CountArm",CountArm,0},
+  };
+  NormalMenu(TestMenu,ARRAYSIZE(TestMenu));
+}
+
 void Test(){
   NameFunc TestMenu[]={
     {"RunSquare",RunSquare,2},
     {"Backn'Force",BackForce,2},
     {"SyncMotor",SyncMotor,0},
+    {"Gentle",Gentle,2},
+    {"Test2",Test2,1},
     {"",Credit,2}
   };
   NormalMenu(TestMenu,ARRAYSIZE(TestMenu));

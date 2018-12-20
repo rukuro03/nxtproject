@@ -56,13 +56,10 @@ typedef enum{
 #define BASE_POWER 50
 //タイマー初期値
 #define TIME_LEFT 120
-//車輪半径
-#define WHEEL_RADIUS 56
-//タイヤ間距離
-#define SHAFT_LENGTH 190
-//アームを上げる/下げるときのパワー
-#define ARM_POWER_UP -50
-#define ARM_POWER_DOWN 30
+
+//アームを上げる/下げるときの方向
+#define ARM_POWER_UP -1
+#define ARM_POWER_DOWN 1
 //アームを上げるか下げるかの選択
 #define ARM_UP 1
 #define ARM_DOWN 0

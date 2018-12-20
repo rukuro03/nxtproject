@@ -17,14 +17,14 @@ void Strategy(){
   FLGPTN flg;
   //機能テスト用に適当に動作を指定しました
   //タイヤを紫までもっていってあわよくば青も落とす
-  MoveArm(ARM_UP);
+  MoveArm(ARM_UP,30);
   flg = MLIgnoreTouch(70,0, 1300);
   flg = MLIgnoreTouch(70,6, 1350);
-  MoveArm(ARM_DOWN);
+  MoveArm(ARM_DOWN,30);
   flg = MLIgnoreTouch(-70, 0, 50);
-  MoveArm(ARM_UP);
+  MoveArm(ARM_UP,20);
   flg = MLIgnoreTouch(-70, -2, 3000);
-  MoveArm(ARM_DOWN);
+  MoveArm(ARM_DOWN,20);
 }
 
 void RedBall(){

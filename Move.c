@@ -10,7 +10,9 @@
 
 //グローバル変数
 static int g_power,g_turn,g_length;
-static double g_pgain=5,g_igain=5,g_dgain=5;
+static double g_pgain=10,g_igain=10,g_dgain=10;
+//車輪半径・タイヤ間距離
+static int g_wheelradius=56,g_shaftlength=195;
 // グローバル変数のゲッターです
 int GetPower(){
   return g_power;
@@ -30,8 +32,14 @@ int GetIgain(){
 int GetDgain(){
   return g_dgain;
 }
+int GetWheelRadius(){
+  return g_wheelradius;
+}
+int GetShaftLength(){
+  return g_shaftlength;
+}
 
-// ゲインのセッターです
+//  グローバル変数のセッターです
 void SetPgain(int pg){
   g_pgain=pg;
 }
@@ -41,7 +49,12 @@ void SetIgain(int ig){
 void SetDgain(int dg){
   g_dgain=dg;
 }
-
+void SetWheelRadius(int wr){
+  g_wheelradius=wr;
+}
+void SetShaftLength(int len){
+  g_shaftlength=len;
+}
 
 /*
   MoveTsk
@@ -228,11 +241,11 @@ FLGPTN MoveTurn(int pow,int turn,DeviceConstants slave){
   //パワー・旋回角度・内側のモータを指定して信地旋回します
   
   //外側のモータが進まないと行けない距離 タイヤ間距離を半径とする円周
-  int length=(SHAFT_LENGTH)*2*3.14*turn/360;
+  int length=(g_shaftlength)*2*3.14*turn/360;
   if(slave==Lmotor)//右回転
-    return MoveLength(pow,200,length);
+    return MoveLength(pow,200,length/2);
   else //左回転
-    return MoveLength(pow,-200,length);
+    return MoveLength(pow,-200,length/2);
 }
 
 FLGPTN WaitForOR(FLGPTN flg){

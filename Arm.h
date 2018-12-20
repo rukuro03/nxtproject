@@ -5,6 +5,6 @@
 
 #ifndef ARM_H
 #define ARM_H
-void MoveArm(int);
+void MoveArm(int,int);
 void CalibArm();
 #endif

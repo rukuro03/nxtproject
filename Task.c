@@ -101,7 +101,7 @@ void CheckTsk(VP_INT exinf){
     rot=nxt_motor_get_count(master)-rot_p;
     if(rot<0)
       rot=-rot;
-    if((double)2*WHEEL_RADIUS*3.14*rot/360>GetLength()){
+    if((double)2*GetWheelRadius()*3.14*rot/360>GetLength()){
       set_flg(Fsens,efEndMove);
       break;
     }
