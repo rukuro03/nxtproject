@@ -52,7 +52,7 @@ void SetDgain(int dg){
 void MoveTsk(VP_INT exinf){
   DeviceConstants master,slave;
   int mrot,srot;
-  int turn=GetTurn(),power=GetPower(),abspower,tmp,wait;
+  int turn=GetTurn(),power=GetPower(),tmp,wait;
   int cur_spow;//current slave power
   double pgain=GetPgain(),dgain=GetDgain(),igain=GetIgain();
   double val,error=0,error_d=0,error_i=0;
@@ -171,6 +171,8 @@ void MoveActivate(){
 void MoveTerminate(){
   //  ter_tsk(Tmove)のラッパーです
   ter_tsk(Tmove);
+  ter_tsk(Tcheck);
+  ter_tsk(Ttimeout);
   MoveSetPower(0);
   MoveSetSteer(0);  
 }
@@ -226,11 +228,11 @@ FLGPTN MoveTurn(int pow,int turn,DeviceConstants slave){
   //パワー・旋回角度・内側のモータを指定して信地旋回します
   
   //外側のモータが進まないと行けない距離 タイヤ間距離を半径とする円周
-  int length=SHAFT_LENGTH*2*3.14*turn/360;
+  int length=(SHAFT_LENGTH)*2*3.14*turn/360;
   if(slave==Lmotor)//右回転
-    return MoveLength(pow,100,length);
+    return MoveLength(pow,200,length);
   else //左回転
-    return MoveLength(pow,-100,length);
+    return MoveLength(pow,-200,length);
 }
 
 FLGPTN WaitForOR(FLGPTN flg){

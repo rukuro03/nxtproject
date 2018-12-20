@@ -59,7 +59,7 @@ typedef enum{
 //車輪半径
 #define WHEEL_RADIUS 56
 //タイヤ間距離
-#define SHAFT_LENGTH 125
+#define SHAFT_LENGTH 190
 //アームを上げる/下げるときのパワー
 #define ARM_POWER_UP -50
 #define ARM_POWER_DOWN 30

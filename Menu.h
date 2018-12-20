@@ -6,7 +6,7 @@ typedef void (*SFunc)(int); // メニュー関数(引数あり)
 typedef struct _NameFunc {
   char *name;
   MFunc func;
-  int sub;// サブメニューを開くか否か
+  int sub;// サブメニューを開くか否か 0:task 1:submenu 2:direct
 } NameFunc;
 
 typedef struct _SetFunc{

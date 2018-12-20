@@ -26,7 +26,6 @@ void InitTsk(VP_INT exinf){
   display_string("Initializing");
   display_update();
   act_tsk(Tmain);
-  act_tsk(Tdisp);
 }
 
 /*
@@ -39,28 +38,20 @@ void MainTsk(VP_INT exinf){
     {"Run",Run,0},
     {"Setting",Setting,2},
     {"ChangeStrategy",ChangeStrategy,1},
+    {"Power Off",ecrobot_shutdown_NXT},
     {"Test",Test,1}
   };
   NormalMenu(MainMenu,ARRAYSIZE(MainMenu));
 }
 
-// 実行開始のラッパー
-void Start(){
-  wai_sem(Sdisp);//ディスプレイの占有権待ち
-  display_clear(0);
-  sig_sem(Sdisp);
-  act_tsk(Tfunc);
-  act_tsk(Tquit);
-}
 // 実行終了のラッパー
 void Quit(){
-  ter_tsk(Tfunc);
   ter_tsk(Tcheck);
   ter_tsk(Ttimeout);
   ter_tsk(Tmusc);
   ClearLog();
-  MoveTerminate();
   act_tsk(Tmain);
+  MoveTerminate();
 }
 
 /*
@@ -75,8 +66,9 @@ void QuitTsk(VP_INT exinf){
     btn=get_btn();
     if(btn==Cbtn){
       Quit();
+      ter_tsk(Tfunc);
+      break;
     }
-    dly_tsk(20);
   }
 }
 
@@ -208,14 +200,19 @@ SensTsk(VP_INT exinf)
       break;
     case NXT_COLOR_GREEN:
       set_flg(Fsens,efGreen);
+      break;
     case NXT_COLOR_YELLOW:
       set_flg(Fsens,efYellow);
+      break;
     case NXT_COLOR_ORANGE:
       set_flg(Fsens,efOrange);
+      break;
     case NXT_COLOR_RED:
       set_flg(Fsens,efRed);
+      break;
     case NXT_COLOR_WHITE:
       set_flg(Fsens,efWhite);
+      break;
     default:
       //未識別色
       //efUnknownは1110000=色部分をクリアできるよう設定してある
@@ -223,7 +220,7 @@ SensTsk(VP_INT exinf)
       break;
     }
   }
-  dly_tsk(2);
+  dly_tsk(5);
 }
 
 /*

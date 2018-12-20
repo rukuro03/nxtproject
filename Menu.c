@@ -39,23 +39,29 @@ void NormalMenu(NameFunc* MenuList,int cnt){
     case Obtn:	// オレンジボタン == 選択
       if(MenuList[menu].sub==0){
 	g_function=MenuList[menu].func;
-	Start();
+	act_tsk(Tfunc);
+	act_tsk(Tquit);
+	break;
       }
       else{
 	//サブメニュー
 	MenuList[menu].func();
 	if(MenuList[menu].sub==1){
+	  //サブメニュー
 	  if(canceled==0)
 	    break;
-	  else//サブメニュー(変数選択)
+	  else{
+	    canceled=0;
 	    continue;
+	  }
 	}
-	else
+	else if(MenuList[menu].sub==2){ //直接実行
 	  continue;
+	}
       }
       break;
     case Cbtn:	// グレーボタン == キャンセル
-      if(level==0){
+      if(level==1){
 	ecrobot_shutdown_NXT();
 	break;
       }
@@ -76,6 +82,7 @@ void NormalMenu(NameFunc* MenuList,int cnt){
     }
     break;
   }
+  level--;
 }
 
 
@@ -174,15 +181,15 @@ void Setting(){
 }
 
 void SetNormal(){
-  g_function=Strategy;
+  g_strategy=Strategy;
 }
 
 void SetRedBall(){
-  g_function=RedBall;
+  g_strategy=RedBall;
 }
 
 void SetTire(){
-  g_function=Tire;
+  g_strategy=Tire;
 }
 
 
@@ -205,19 +212,23 @@ void FuncTsk(VP_INT exinf){
   sig_sem(Sdisp);
   (*g_function)();
   Quit();
+  ter_tsk(Tquit);
 }
 
 //テスト関数群
 
 void Credit(){
+  wai_sem(Sdisp);
+  display_clear(0);
+  sig_sem(Sdisp);
   LogString("2018");
   LogString("cirusmarine1505");
-  dly_tsk(100);
+  dly_tsk(2000);
 }
 
 void RunSquare(){
-  int i;
-  for(i=0;i<4;i++){
+  int i; 
+ for(i=0;i<4;i++){
     MoveLength(70,0,1000);
     MoveTurn(70,90,Rmotor);
   }
@@ -228,10 +239,76 @@ void BackForce(){
   MoveLength(-70,0,1000);
 }
 
+void SyncMotor(){
+  /*
+    左右のモータのシンクロ率を測ります
+    パワーを0から90まで上げながら、
+    左右のモータの回転速度(度/10ミリ秒)を表示します
+    0.5秒計測する→表示する→オレンジ押す→パワー上がる…
+    のループです　
+  */
+
+  int pow=0,sum=0;
+  int i;
+  int ldat[10]={0};
+  int rdat[10]={0};
+  nxtButton btn;
+  for(i=0;i<10;i++){
+    //パワーを上げながら値(度)を取得していきます
+    pow = i*10;
+    //わかってる値を表示
+    display_clear(0);
+    display_goto_xy(0,1);
+    display_string("Testing...");
+    display_goto_xy(0,2);
+    display_string("Pow  L  R");
+    display_goto_xy(0,3);
+    display_int(pow,4);
+    display_update();
+    //モータ回転開始
+    motor_set_speed(Rmotor, pow, 1);//パワーを与え
+    motor_set_speed(Lmotor, pow, 1);
+    nxt_motor_set_count(Rmotor, 0);//回転角初期化？
+    nxt_motor_set_count(Lmotor, 0);
+    dly_tsk(1000);//1s待機
+    rdat[i]=nxt_motor_get_count(Rmotor);//回転角度取得
+    ldat[i]=nxt_motor_get_count(Lmotor);
+    //回転速度表示
+    display_string(" ");
+    display_int(ldat[i],4);
+    display_string(" ");
+    display_int(rdat[i],4);
+    display_update();
+  }
+  //一応ひと目でわかるように適当な誤差値を出すようにする
+  //とりあえず小さいほどいい感じ
+  for(i=0;i<10;i++){
+    sum += (rdat[i] - ldat[i]) * (rdat[i] - ldat[i]);
+  }
+  display_clear(0);
+  display_goto_xy(0,1);
+  display_string("Result:");
+  display_int(sum,4);
+  display_goto_xy(0,2);
+  display_string("Press Orange");
+  display_update();
+  /*この間は
+    Result:1000
+    Press Orange
+    　みたいな表示が出ている
+  */
+  do{
+    btn = get_btn();
+  }while(btn != Obtn);
+  motor_set_speed(Rmotor, 0, 1);
+  motor_set_speed(Lmotor, 0, 1);
+}
+
 void Test(){
   NameFunc TestMenu[]={
-    {"RunSquare",RunSquare},
-    {"Backn'Force",BackForce},
+    {"RunSquare",RunSquare,2},
+    {"Backn'Force",BackForce,2},
+    {"SyncMotor",SyncMotor,0},
     {"",Credit,2}
   };
   NormalMenu(TestMenu,ARRAYSIZE(TestMenu));
