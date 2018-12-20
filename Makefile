@@ -63,5 +63,5 @@ Log.o		: Log.h
 Arm.o		: Arm.h
 Menu.o		: Menu.h
 Move.o		: Move.h
-Task.o		:
+Task.o		: Task.h
 # 上記適当に変えました　悪い意味の適当です。

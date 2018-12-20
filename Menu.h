@@ -15,7 +15,7 @@ typedef struct _SetFunc{
   int def;// 引数のデフォルト値
 } SetFunc;
 
-voido NormalMenu(NameFunc*,int);
+void NormalMenu(NameFunc*,int);
 void SetMenu(SetFunc*,int);
 //メインメニューの項目
 void Calibration();

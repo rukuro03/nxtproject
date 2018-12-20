@@ -11,6 +11,7 @@
 #include "Move.h"
 #include "Log.h"
 #include "Menu.h"
+#include "Task.h"
 
 //グローバル変数
 static int g_timer,g_timeout;
@@ -44,15 +45,15 @@ void MainTsk(VP_INT exinf){
 }
 
 // 実行開始のラッパー
-static void Start(){
+void Start(){
   wai_sem(Sdisp);//ディスプレイの占有権待ち
-  display_clear();
+  display_clear(0);
   sig_sem(Sdisp);
   act_tsk(Tfunc);
   act_tsk(Tquit);
 }
 // 実行終了のラッパー
-static void Quit(){
+void Quit(){
   ter_tsk(Tfunc);
   ter_tsk(Tcheck);
   ter_tsk(Ttimeout);
@@ -223,7 +224,6 @@ SensTsk(VP_INT exinf)
     }
   }
   dly_tsk(2);
-  }
 }
 
 /*

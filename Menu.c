@@ -4,6 +4,7 @@
 #include "Move.h"
 #include "Arm.h"
 #include "Log.h"
+#include "Task.h"
 #include "monoatume.h"
 
 static MFunc g_strategy=Strategy;
@@ -14,7 +15,6 @@ void NormalMenu(NameFunc* MenuList,int cnt){
   int i;
   nxtButton btn;
   int menu = 0;
-  MFunc retval;
   static int level=0,canceled=0;
   level++;
   for (;;) {
@@ -33,7 +33,7 @@ void NormalMenu(NameFunc* MenuList,int cnt){
       display_string(MenuList[i].name);
     }
     display_update();
-    sig_sem(SDisp);
+    sig_sem(Sdisp);
     btn = get_btn();
     switch (btn) {
     case Obtn:	// オレンジボタン == 選択
@@ -108,7 +108,7 @@ void SetMenu(SetFunc* MenuList,int cnt){
       display_int(nums[i],4);
     }
     display_update();
-    sig_sem(SDisp);
+    sig_sem(Sdisp);
     btn = get_btn();
     switch (btn) {
     case Obtn:	// オレンジボタン == 選択

@@ -75,8 +75,6 @@ typedef enum{
 #define LOGINT LOGNUM+1
 
 
-//置き場所に困ったのでここで宣言します　定義はTask.c内です
-void SetTimeOut(int);
 //monoatume.cで定義される関数の宣言
 void Strategy();
 void RedBall();

@@ -56,7 +56,7 @@ void MoveTsk(VP_INT exinf){
   int cur_spow;//current slave power
   double pgain=GetPgain(),dgain=GetDgain(),igain=GetIgain();
   double val,error=0,error_d=0,error_i=0;
-  int ireset=0;
+  int ireset=0,isReverse=0;
   //turnの値は「外側のタイヤに対し内側のタイヤは(100-turn)%回る」という意味
   if(turn<0)
     turn=-turn;
@@ -66,6 +66,8 @@ void MoveTsk(VP_INT exinf){
     wait=-wait;
 
   cur_spow=(100-turn)*power/100.0;
+  if(cur_spow<0)
+    isReverse=1;
   GetMasterSlave(&master,&slave);
   for(;;){
     mrot=nxt_motor_get_count(master);
