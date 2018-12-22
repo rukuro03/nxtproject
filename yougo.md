@@ -53,16 +53,7 @@ API。これはC言語ではなく、コンパイラではないプログラム(
 + **display系**:結構ストレートな名前なのでわかりやすいはず。
 
 # 自作API
-+ **get_master_slave**:外側と内側のモーターのポートを取得。
-+ **MoveSetPower**:モーターパワーの設定。
-+ **MoveSetSteer**:モータ回転比の設定＋設定されたパワーからパワーの調整。
-+ **MoveActivate**:移動用タスクの起動。
-+ **MoveTerminate**:移動用タスクの終了+モータの停止。
-+ **WaitForOR**:wai_flgのラッパーORバージョン。
-+ **WaitForAND**:wai_flgのラッパーANDバージョン。
-+ **MoveLength**:MoveSetPower→MoveSetSteer→MoveActivate→WaitForOR→
-MoveTerminateを行うラッパー。
-+ **MoveTurn**:機体の角度を旋回させる。MoveLengthのラッパー。
+API.mdを見てください
 
 ### 参考文献：
 #### μITRON ver4.2.0　仕様書
