@@ -52,25 +52,12 @@ typedef enum{
 //定義・宣言群
 #define ARRAYSIZE(A)	(sizeof((A)) / sizeof((A)[0]))
 #define MACHINE_NAME "GOHAN"
-//標準パワー?
-#define BASE_POWER 50
 //タイマー初期値
 #define TIME_LEFT 120
 
-//アームを上げる/下げるときの方向
-#define ARM_POWER_UP -1
-#define ARM_POWER_DOWN 1
-//アームを上げるか下げるかの選択
-#define ARM_UP 1
-#define ARM_DOWN 0
 //ヘッダー・フッター位置 
 #define HEADER 0
 #define FOOTER 7
-//ログ総数
-#define LOGNUM FOOTER-HEADER-2
-//数値ログ位置
-#define LOGINT LOGNUM+1
-
 
 //monoatume.cで定義される関数の宣言
 void Strategy();

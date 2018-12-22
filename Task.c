@@ -46,19 +46,17 @@ void MainTsk(VP_INT exinf){
 
 // 実行終了のラッパー
 void Quit(){
-  ter_tsk(Tcheck);
-  ter_tsk(Ttimeout);
   ter_tsk(Tmusc);
   ClearLog();
-  act_tsk(Tmain);
   MoveTerminate();
+  ArmDown(30);
+  act_tsk(Tmain);
 }
 
 /*
   QuitTsk
   メニュー項目強制終了用タスク
   ボタン押したら強制終了させ、初期化処理を行う
-  なんか終わらせるタスクがやたらと多いんですが
 */
 void QuitTsk(VP_INT exinf){
   nxtButton btn;
@@ -166,6 +164,7 @@ SensTsk(VP_INT exinf)
   int rrel=0,lrel=0;
   U16 color;
   for (;;) {
+    dly_tsk(5);
     ecrobot_process_bg_nxtcolorsensor();
     if(ecrobot_get_touch_sensor(Rtouch)){
       if(rrel==0){
@@ -178,7 +177,7 @@ SensTsk(VP_INT exinf)
       rrel=0;
     }
     if(ecrobot_get_touch_sensor(Ltouch)){
-      if(rrel==0){
+      if(lrel==0){
 	set_flg(Fsens,efLtouch);
 	lrel=1;
       }
@@ -220,7 +219,6 @@ SensTsk(VP_INT exinf)
       break;
     }
   }
-  dly_tsk(5);
 }
 
 /*

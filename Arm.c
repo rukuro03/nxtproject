@@ -3,75 +3,66 @@
 */
 
 #include "monoatume_cfg.h"
+#include "Arm.h"
 #include "Log.h"
 
 static int g_armup=-40;//一番上まで上がったときの回転角度
-void MoveArm(int mode,int pow){
-  int deg,rot=0,d_rot,power;
-  if(mode==ARM_UP){
-    deg=g_armup;
-    power=pow*ARM_POWER_UP;
-  }
-  else{
-    deg=0;
-    power=pow*ARM_POWER_DOWN;
-  }
 
-  if(nxt_motor_get_count(Arm)>deg){
-    //今のアーム位置よりも上げなければいけない時
-    motor_set_speed(Arm,power,1);
-    for(;;){
-      d_rot=rot;
-      dly_tsk(100);
-      rot=nxt_motor_get_count(Arm);
-      if(rot<deg || d_rot-rot==0)
+void ArmDown(int pow){
+  //アームを下げます
+  int rot,timer=0;
+  int power=ARM_DOWN_DIR*pow;//実際のパワー
+  if(g_armstate==0)
+    return;//すでにアームが下がっている
+  motor_set_speed(Arm,power,1);
+  for(;;){
+    dly_tsk(ARM_WAIT);
+    rot=nxt_motor_get_count(Arm);
+    /*
+      パワーの符号と回転角度の変位の符号は一緒(たぶん)
+      だからパワーが負なら回転角度が負になるまで回せば終了
+    */
+
+    if(power<0){
+      if(rot<=0)
 	break;
     }
-  }
-  else{
-    //今のアーム位置よりも下げなければいけない時
-    motor_set_speed(Arm,power,1);
-    for(;;){
-      d_rot=rot;
-      dly_tsk(100);
-      rot=nxt_motor_get_count(Arm);
-      if(rot>deg || d_rot-rot==0)
+    else{
+      if(rot>=0)
 	break;
     }
+    if(timer>ARM_TIMEOUT)
+      break;
+    timer+=ARM_WAIT;
   }
   motor_set_speed(Arm,0,1);
 }
 
-void CalibArm(){
-  int rot;
-  motor_set_speed(Arm,ARM_POWER_DOWN*30,1);
-  LogString("Arm Down");
+void ArmUp(int pow){
+  //アームを上げます
+  int rot,timer=0;
+  int power=ARM_UP_DIR*pow;//実際のパワー
+  if(g_armstate==1)
+    return;//すでにアームが上がっている
+  motor_set_speed(Arm,power,1);
   for(;;){
+    dly_tsk(ARM_WAIT);
     rot=nxt_motor_get_count(Arm);
-    dly_tsk(1000);
-    rot-=nxt_motor_get_count(Arm);
-    if(rot<0)
-      rot=-rot;
-    if(rot<1){
-      nxt_motor_set_count(Arm,0);//一番下に下げた状態でカウントを0にする
-      break;
+    /*
+      パワーの符号と回転角度の変位の符号は一緒(たぶん)
+      だからパワーが負なら回転角度が負になるまで回せば終了
+    */
+    if(power<0){
+      if(rot<=g_armup)
+	break;
     }
-  }
-  motor_set_speed(Arm,ARM_POWER_UP*30,1);
-  LogString("Arm Up");
-  for(;;){
-    rot=nxt_motor_get_count(Arm);
-    dly_tsk(1000);
-    rot-=nxt_motor_get_count(Arm);
-    if(rot<0)
-      rot=-rot;
-    if(rot<1){
-      g_armup=nxt_motor_get_count(Arm);
-      break;
+    else{
+      if(rot>=g_armup)
+	break;
     }
+    if(timer>ARM_TIMEOUT)
+      break;
+    timer+=ARM_WAIT;
   }
-  LogInt(g_armup);
-  LogString("Arm Down");
-  MoveArm(ARM_DOWN,30);
   motor_set_speed(Arm,0,1);
 }

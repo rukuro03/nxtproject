@@ -4,6 +4,10 @@
 #ifndef LOG_H
 #define LOG_H
 
+//ログ総数
+#define LOGNUM FOOTER-HEADER-2
+//数値ログ位置
+#define LOGINT LOGNUM+1
 void Menu();
 void ClearLog();
 void LogString(char*);

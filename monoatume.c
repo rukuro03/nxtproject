@@ -15,19 +15,19 @@
 
 void Strategy(){
   //青をとる
-  MoveArm(ARM_UP,30);
+  ArmUp(30);
   MoveLength(70, 0, 500);
   MoveTurn(70, 30, Lmotor);
   MoveLength(70, 0, 500);
-  MoveArm(ARM_DOWN,30);
+  ArmDown(30);
   MoveLength(-50, 0, 30);
   dly_tsk(1000);
-  MoveArm(ARM_UP,30);
+  ArmUp(30);
 
   //赤をとる
   MoveLength(-70, 0, 300);
   MoveTurn(70, 50, Rmotor);
-  MoveArm(ARM_DOWN,30);
+  ArmDown(30);
   MoveLength(50, 0, 500);
 
   //下の壁に向かう
@@ -45,12 +45,12 @@ void Strategy(){
   MoveLength(-70, 0, 400);
   MoveTurn(70, 50, Rmotor);
   MoveLength(50, 0, 800);
-  MoveArm(ARM_UP,30);
+  ArmUp(30);
   MoveLength(50, 0, 50);
-  MoveArm(ARM_DOWN,30);
+  ArmDown(30);
   MoveLength(-50, 0, 50);
   dly_tsk(1000);
-  MoveArm(ARM_UP,30);
+  ArmUp(30);
 
   //帰る
   MoveLength(-50, 0, 700);

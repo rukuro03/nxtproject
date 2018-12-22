@@ -77,7 +77,8 @@ void MoveTsk(VP_INT exinf){
   wait=10000/power;
   if(wait<0)
     wait=-wait;
-
+  if(wait>MOVE_WAITMAX)
+    wait=MOVE_WAITMAX;
   cur_spow=(100-turn)*power/100.0;
   if(cur_spow<0)
     isReverse=1;
@@ -186,8 +187,9 @@ void MoveTerminate(){
   ter_tsk(Tmove);
   ter_tsk(Tcheck);
   ter_tsk(Ttimeout);
-  MoveSetPower(0);
+  MoveSetPower(10);//減速
   MoveSetSteer(0);  
+  MoveSetPower(0);
 }
 
 void CheckLength(int length){
@@ -220,16 +222,12 @@ FLGPTN MoveLength(int pow,int turn,int length){
 
 FLGPTN MLIgnoreTouch(int pow,int turn,int length){
   FLGPTN sensor;
-  //turn:-200~200
-  //turnの値は「外側のタイヤに対し内側のタイヤは(100-turn%)回る」という意味
-  //turnがマイナスだと右が外側左が内側
-  //turnがプラスだと左が外側右が内側
   MoveSetPower(pow);
   MoveSetSteer(turn);
   CheckLength(length);
   MoveActivate();
   /*
-    完了/時間切れ/左右どちらかのタッチセンサが押される
+    完了/時間切れ
     のいずれかまで待つ
   */
   sensor=WaitForOR(efEndMove | efTOMove);

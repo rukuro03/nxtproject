@@ -4,7 +4,9 @@
 #ifndef MOVE_H
 #define MOVE_H
 
-#include "monoatume_cfg.h" //DeviceConstantsがいるから 今後変えようかな
+#include "monoatume_cfg.h"
+
+#define MOVE_WAITMAX 500
 
 int GetPower();
 int GetTurn();
@@ -26,10 +28,9 @@ void MoveActivate();
 void MoveTerminate();
 FLGPTN MoveLength(int,int,int);
 FLGPTN MLIgnoreTouch(int,int,int);
-FLGPTN MoveTurn(int,int,DeviceConstants);//今後これがintだけになるかも
+FLGPTN MoveTurn(int,int,DeviceConstants);
 void CheckLength(int);
 void SetTimeOut(int);
 FLGPTN WaitForOR(FLGPTN);
 FLGPTN WaitForAND(FLGPTN);
-
 #endif

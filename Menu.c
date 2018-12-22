@@ -248,45 +248,32 @@ void SyncMotor(){
     左右のモータの回転速度(度/10ミリ秒)を表示します
     0.5秒計測する→表示する→オレンジ押す→パワー上がる…
     のループです　
-  */
 
+    最終的な出力が小さいほどいいモータのペアです
+  */
   int pow=0,sum=0;
   int i;
-  int ldat[10]={0};
-  int rdat[10]={0};
+  int ldat,rdat;
   nxtButton btn;
-  for(i=0;i<10;i++){
+  wai_sem(Sdisp);
+  display_clear(0);
+  display_goto_xy(0,1);
+  display_string("Testing...");
+  display_update();
+  sig_sem(Sdisp);
+  for(i=0;i<11;i++){
     //パワーを上げながら値(度)を取得していきます
     pow = i*10;
-    //わかってる値を表示
-    display_clear(0);
-    display_goto_xy(0,1);
-    display_string("Testing...");
-    display_goto_xy(0,2);
-    display_string("Pow  L  R");
-    display_goto_xy(0,3);
-    display_int(pow,4);
-    display_update();
-    //モータ回転開始
     motor_set_speed(Rmotor, pow, 1);//パワーを与え
     motor_set_speed(Lmotor, pow, 1);
-    nxt_motor_set_count(Rmotor, 0);//回転角初期化？
+    nxt_motor_set_count(Rmotor, 0);//回転角初期化
     nxt_motor_set_count(Lmotor, 0);
     dly_tsk(1000);//1s待機
-    rdat[i]=nxt_motor_get_count(Rmotor);//回転角度取得
-    ldat[i]=nxt_motor_get_count(Lmotor);
-    //回転速度表示
-    display_string(" ");
-    display_int(ldat[i],4);
-    display_string(" ");
-    display_int(rdat[i],4);
-    display_update();
+    rdat=nxt_motor_get_count(Rmotor);//回転角度取得
+    ldat=nxt_motor_get_count(Lmotor);
+    sum+=(rdat-ldat)*(rdat-ldat);
   }
-  //一応ひと目でわかるように適当な誤差値を出すようにする
-  //とりあえず小さいほどいい感じ
-  for(i=0;i<10;i++){
-    sum += (rdat[i] - ldat[i]) * (rdat[i] - ldat[i]);
-  }
+  wai_sem(Sdisp);
   display_clear(0);
   display_goto_xy(0,1);
   display_string("Result:");
@@ -294,6 +281,9 @@ void SyncMotor(){
   display_goto_xy(0,2);
   display_string("Press Orange");
   display_update();
+  sig_sem(Sdisp);
+  motor_set_speed(Rmotor, 0, 1);
+  motor_set_speed(Lmotor, 0, 1);
   /*この間は
     Result:1000
     Press Orange
@@ -302,17 +292,15 @@ void SyncMotor(){
   do{
     btn = get_btn();
   }while(btn != Obtn);
-  motor_set_speed(Rmotor, 0, 1);
-  motor_set_speed(Lmotor, 0, 1);
 }
 
 void Gentle(){
-  MoveArm(ARM_DOWN,30);
+  ArmDown(30);
   MoveLength(20,0,200);
-  MoveArm(ARM_UP,20);
+  ArmUp(10);
   dly_tsk(1000);
   MoveLength(-20,0,200);
-  MoveArm(ARM_DOWN,10);
+  ArmDown(10);
 }
 
 void CountArm(){
