@@ -188,12 +188,17 @@ void SetTire(){
   g_strategy=Tire;
 }
 
+void SetRe(){
+  g_strategy=Re;
+}
+
 
 void ChangeStrategy(){
   NameFunc StrategyMenu[] = {
     {"Normal",SetNormal},
     {"RedBall",SetRedBall},
     {"Tire",SetTire},
+    {"Re", SetRe},
    };
   NormalMenu(StrategyMenu,ARRAYSIZE(StrategyMenu));
 }

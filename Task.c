@@ -93,10 +93,13 @@ void TimerTsk(VP_INT exinf){
 */
 void CheckTsk(VP_INT exinf){
   DeviceConstants master,slave;
-  int rot;
   GetMasterSlave(&master,&slave);
+  int rot,rot0=nxt_motor_get_count(master);
+
   for(;;){
-    rot=nxt_motor_get_count(master);
+    rot=nxt_motor_get_count(master)-rot0;
+    if(rot<0)
+      rot=-rot;
     if((double)2*GetWheelRadius()*3.14*rot/360>GetLength()){
       set_flg(Fsens,efEndMove);
       break;

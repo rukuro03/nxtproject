@@ -63,6 +63,7 @@ typedef enum{
 void Strategy();
 void RedBall();
 void Tire();
+void Re();
 #endif
 
 #endif
