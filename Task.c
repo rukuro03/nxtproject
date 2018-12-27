@@ -65,8 +65,8 @@ void QuitTsk(VP_INT exinf){
   for(;;){
     btn=get_btn();
     if(btn==Cbtn){
-      Quit();
       ter_tsk(Tfunc);
+      Quit();
       break;
     }
   }
