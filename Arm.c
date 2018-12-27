@@ -6,14 +6,16 @@
 #include "Arm.h"
 #include "Log.h"
 
-static int g_armup=-40;//一番上まで上がったときの回転角度
+static int g_armup=ARM_DEFAULT_UP;//一番上まで上がったときの回転角度
+
+void SetArmUp(int deg){
+  g_armup=deg;
+}
 
 void ArmDown(int pow){
   //アームを下げます
   int rot,timer=0;
   int power=ARM_DOWN_DIR*pow;//実際のパワー
-  if(g_armstate==0)
-    return;//すでにアームが下がっている
   motor_set_speed(Arm,power,1);
   for(;;){
     dly_tsk(ARM_WAIT);
@@ -42,8 +44,6 @@ void ArmUp(int pow){
   //アームを上げます
   int rot,timer=0;
   int power=ARM_UP_DIR*pow;//実際のパワー
-  if(g_armstate==1)
-    return;//すでにアームが上がっている
   motor_set_speed(Arm,power,1);
   for(;;){
     dly_tsk(ARM_WAIT);

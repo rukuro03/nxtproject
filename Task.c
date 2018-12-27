@@ -8,6 +8,7 @@
 #include "button.h"
 #include "music.h"
 #include "graphics.h"
+#include "Arm.h"
 #include "Move.h"
 #include "Log.h"
 #include "Menu.h"
@@ -21,6 +22,7 @@ static int g_timer,g_timeout;
 */
 void InitTsk(VP_INT exinf){
   g_timer=TIME_LEFT;
+  SetArmUp(ARM_DEFAULT_UP);
   display_clear(0);
   display_goto_xy(2, 3);
   display_string("Initializing");
@@ -34,7 +36,6 @@ void InitTsk(VP_INT exinf){
 */
 void MainTsk(VP_INT exinf){
   NameFunc MainMenu[] = {
-    {"Calibration",Calibration,0},
     {"Run",Run,0},
     {"Setting",Setting,2},
     {"ChangeStrategy",ChangeStrategy,1},
@@ -49,6 +50,7 @@ void Quit(){
   ter_tsk(Tmusc);
   ClearLog();
   MoveTerminate();
+  SetArmUp(ARM_DEFAULT_UP);
   ArmDown(30);
   act_tsk(Tmain);
 }

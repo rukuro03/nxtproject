@@ -159,12 +159,6 @@ void SetMenu(SetFunc* MenuList,int cnt){
   }
 }
 
-void Calibration(){
-  //色のカリブレーション
-  //アームのカリブレーション
-  CalibArm();
-}
-
 void Run(){
   act_tsk(Ttimer);
   act_tsk(Tmusc);
@@ -295,12 +289,22 @@ void SyncMotor(){
 }
 
 void Gentle(){
+  SetArmUp(ARM_T_UP);
   ArmDown(30);
   MoveLength(20,0,200);
-  ArmUp(10);
+  ArmUp(30);
   dly_tsk(1000);
   MoveLength(-20,0,200);
   ArmDown(10);
+}
+
+void TestArm(){
+  for(int i=0;i<100;i++){
+    LogString("Arm Up");
+    ArmUp(40);
+    LogString("Arm Down");
+    ArmDown(40);
+  }
 }
 
 void CountArm(){
@@ -315,6 +319,7 @@ void CountArm(){
 
 void Test2(){
   NameFunc TestMenu[]={
+    {"TestArm",TestArm,0},
     {"CountArm",CountArm,0},
   };
   NormalMenu(TestMenu,ARRAYSIZE(TestMenu));

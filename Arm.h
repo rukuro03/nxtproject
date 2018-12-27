@@ -15,7 +15,12 @@
 #define ARM_WAIT 5
 //アームのタイムアウト(ms)
 #define ARM_TIMEOUT 1000
+//Arm default up degree
+#define ARM_DEFAULT_UP -100
+//Arm up degree when getting T object
+#define ARM_T_UP -40
 
+void SetArmUp(int);
 void ArmDown(int);
 void ArmUp(int);
 #endif

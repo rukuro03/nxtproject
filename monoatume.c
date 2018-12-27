@@ -22,7 +22,7 @@ void Strategy(){
   ArmDown(30);
   MoveLength(-50, 0, 30);
   dly_tsk(1000);
-  ArmUp(30);
+ 
 
   //赤をとる
   MoveLength(-70, 0, 300);

@@ -7,6 +7,7 @@
 #include "display.h"
 #include "monoatume_cfg.h"
 #include "kernel_id.h"
+#include "Log.h"
 
 static char* g_logitem[LOGNUM];
 static int g_logs=0;
