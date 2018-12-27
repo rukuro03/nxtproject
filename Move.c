@@ -12,7 +12,7 @@
 static int g_power,g_turn,g_length;
 static double g_pgain=10,g_igain=10,g_dgain=10;
 //車輪半径・タイヤ間距離
-static int g_wheelradius=56,g_shaftlength=195;
+static int g_wheelradius=56,g_shaftlength=192;
 // グローバル変数のゲッターです
 int GetPower(){
   return g_power;
