@@ -29,6 +29,7 @@ void MoveTerminate();
 FLGPTN MoveLength(int,int,int);
 FLGPTN MLIgnoreTouch(int,int,int);
 FLGPTN MoveTurn(int,int,DeviceConstants);
+FLGPTN MoveCurve(int,int,int);
 void CheckLength(int);
 FLGPTN WaitForOR(FLGPTN);
 FLGPTN WaitForAND(FLGPTN);

@@ -246,6 +246,23 @@ FLGPTN MoveTurn(int pow,int turn,DeviceConstants slave){
     return MoveLength(pow,-200,length/2);
 }
 
+FLGPTN MoveCurve(int pow,int turn, int deg){
+  // deg: Machine's relative degree from the first position.
+  // After execution of this function,
+  // Machine should move like (d+(100-abs(turn)/(100-abs(turn)))*d)mm or less.
+  int s,m,lt;
+  int d=GetShaftLength();
+  if(turn<0){
+    lt=-turn;
+  }
+  else{
+    lt=turn;
+  }
+  s=100-lt;
+  m=100;
+  return MoveLength(pow,turn,(d*((double)s/(m-s))+d)*2*3.14*deg/360);
+}
+
 FLGPTN WaitForOR(FLGPTN flg){
   //wai_flg(Fsens,flg,TWF_ORW,&sensor)のラッパー関数です
   //先生のパクリ

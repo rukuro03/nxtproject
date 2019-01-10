@@ -322,10 +322,24 @@ void CountArm(){
   }
 }
 
+void TurnTest1(){
+  MoveTurn(70,90,Lmotor);
+}
+
+void TurnTest2(){
+  MoveCurve(-70,-30,90);
+  MoveLength(-70,0,300);
+  MoveCurve(-70,30,70);
+  MoveLength(-70, 0,2000);
+}
+
 void Test2(){
   NameFunc TestMenu[]={
     {"TestArm",TestArm,0},
     {"CountArm",CountArm,0},
+    {"Turn test1",TurnTest1,2},
+    {"LastTest",TurnTest2,2},
+    {"",Credit,2},
   };
   NormalMenu(TestMenu,ARRAYSIZE(TestMenu));
 }
@@ -337,7 +351,6 @@ void Test(){
     {"SyncMotor",SyncMotor,0},
     {"Gentle",Gentle,2},
     {"Test2",Test2,1},
-    {"",Credit,2}
   };
   NormalMenu(TestMenu,ARRAYSIZE(TestMenu));
 }

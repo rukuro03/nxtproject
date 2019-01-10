@@ -23,39 +23,38 @@ void Strategy(){
   ArmDown(30);
 
  //赤をとる
-  MoveLength(-50, 0, 300);
-  MoveTurn(50, 70, Rmotor);
-  MLIgnoreTouch(100, 0, 1000);
-  //MoveTurn(50, 60, Rmotor);
-  //MoveLength(70, 0, 600);
+  MoveCurve(-50, -40, 45);
+  MoveTurn(50, 90, Rmotor);
+  MLIgnoreTouch(80, 0, 1000);
   dly_tsk(1000);
 
   //下の壁に向かう
   MoveLength(-70, 0, 200);
   MoveTurn(70, 60, Rmotor);
-  MLIgnoreTouch(70, 0, 2500);
+  MLIgnoreTouch(70, 0, 2300);
 
   //赤をとる
-  MoveLength(-50, 0, 500);
-  MoveTurn(50, 90, Lmotor);
-  MoveLength(50, 0, 600);
-  MoveLength(50, 30, 400);
+  MLIgnoreTouch(-50, 0, 500);
+  MoveCurve(50, 40, 150);
+  MLIgnoreTouch(60, 0, 800);
   dly_tsk(1000);
 
   //紫の四角に向かう
   MoveLength(-70, 0, 400);
-  MoveTurn(70, 50, Rmotor);
-  MoveLength(50, 0, 800);
+  MoveTurn(70, 100, Rmotor);
+  MLIgnoreTouch(50, 0, 650);
   ArmUp(30);
-  MoveLength(50, 0, 50);
+  MoveLength(50, 0, 100);
   ArmDown(30);
-  MoveLength(-50, 0, 50);
+  MoveLength(-50, 0, 100);
   dly_tsk(1000);
   ArmUp(30);
 
   //帰る
-  MoveLength(-50, 0, 700);
-  MoveLength(-70, -20, 2500);
+  MoveCurve(-70,-30,90);
+  MoveLength(-70,0,100);
+  MoveCurve(-70,30,70);
+  MoveLength(-70, 0,2000);
 }
 
 void RedBall(){
