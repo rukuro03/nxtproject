@@ -10,7 +10,7 @@
 
 //グローバル変数
 static int g_power,g_turn,g_length;
-static double g_pgain=10,g_igain=10,g_dgain=10;
+static double g_pgain=15,g_igain=10,g_dgain=10;
 //車輪半径・タイヤ間距離
 static int g_wheelradius=56,g_shaftlength=192;
 // グローバル変数のゲッターです

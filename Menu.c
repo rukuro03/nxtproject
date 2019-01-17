@@ -180,25 +180,39 @@ void SetNormal(){
   g_strategy=Strategy;
 }
 
-void SetRedBall(){
-  g_strategy=RedBall;
+void SetBlock(){
+  g_strategy=Block;
 }
 
 void SetTire(){
   g_strategy=Tire;
 }
 
-void SetRe(){
-  g_strategy=Re;
+void SetReNormal(){
+  g_strategy=ReNormal;
+}
+void SetReBlock(){
+  g_strategy=ReBlock;
+}
+void SetReTire(){
+  g_strategy=ReTire;
 }
 
+void ChangeReverse(){
+  NameFunc ReverseMenu[] = {
+    {"RE_Normal",SetReNormal},
+    {"RE_Block",SetReBlock},
+    {"RE_Tire",SetReTire},
+  };
+  NormalMenu(ReverseMenu,ARRAYSIZE(ReverseMenu));
+}
 
 void ChangeStrategy(){
   NameFunc StrategyMenu[] = {
     {"Normal",SetNormal},
-    {"RedBall",SetRedBall},
+    {"Block",SetBlock},
     {"Tire",SetTire},
-    {"Re", SetRe},
+    {"Reverse",ChangeReverse,1},
    };
   NormalMenu(StrategyMenu,ARRAYSIZE(StrategyMenu));
 }
@@ -327,10 +341,24 @@ void TurnTest1(){
 }
 
 void TurnTest2(){
-  MoveCurve(-70,-30,90);
-  MoveLength(-70,0,300);
-  MoveCurve(-70,30,70);
-  MoveLength(-70, 0,2000);
+  //紫の四角に向かう
+  LogString("Go Purple");
+  MoveCurve(-70,50,150);
+  MoveLength(-70,0,100);
+  ArmUp(30);
+  MLIgnoreTouch(50, 10, 800);
+  ArmDown(100);
+  MoveLength(-50, 0, 100);
+  MoveLength(50, 0, 100);
+  dly_tsk(1000);
+  ArmUp(100);
+  //帰る
+  LogString("Return");
+  MoveLength(-70,0,2700);
+}
+
+void LongRun(){
+  MLIgnoreTouch(70,0,1100);
 }
 
 void Test2(){
@@ -338,7 +366,7 @@ void Test2(){
     {"TestArm",TestArm,0},
     {"CountArm",CountArm,0},
     {"Turn test1",TurnTest1,2},
-    {"LastTest",TurnTest2,2},
+    {"RunSquare",RunSquare,2},
     {"",Credit,2},
   };
   NormalMenu(TestMenu,ARRAYSIZE(TestMenu));
@@ -346,8 +374,8 @@ void Test2(){
 
 void Test(){
   NameFunc TestMenu[]={
-    {"RunSquare",RunSquare,2},
-    {"Backn'Force",BackForce,2},
+    {"LastTest",TurnTest2,2},
+    {"LongRun",LongRun,2},
     {"SyncMotor",SyncMotor,0},
     {"Gentle",Gentle,2},
     {"Test2",Test2,1},

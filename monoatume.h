@@ -61,9 +61,11 @@ typedef enum{
 
 //monoatume.cで定義される関数の宣言
 void Strategy();
-void RedBall();
+void Block();
 void Tire();
-void Re();
+void ReNormal();
+void ReBlock();
+void ReTire();
 #endif
 
 #endif

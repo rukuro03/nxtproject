@@ -12,11 +12,11 @@
 #define ARM_UP 1
 #define ARM_DOWN 0
 //アームの更新待ち時間
-#define ARM_WAIT 5
+#define ARM_WAIT 1
 //アームのタイムアウト(ms)
-#define ARM_TIMEOUT 1000
+#define ARM_TIMEOUT 2000
 //Arm default up degree
-#define ARM_DEFAULT_UP -100
+#define ARM_DEFAULT_UP -70
 //Arm up degree when getting T object
 #define ARM_T_UP -40
 
