@@ -2,6 +2,7 @@
 #define MENU_H
 typedef void (*MFunc)(void); //メニュー関数
 typedef void (*SFunc)(int); // メニュー関数(引数あり)
+typedef void (*StrategyFunc)(int); //戦略用関数
 
 typedef struct _NameFunc {
   char *name;

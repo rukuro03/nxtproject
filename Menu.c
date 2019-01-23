@@ -162,8 +162,30 @@ void SetMenu(SetFunc* MenuList,int cnt){
 void Run(){
   act_tsk(Ttimer);
   act_tsk(Tmusc);
-  (*g_strategy)();  
+  (*g_strategy)(CLOCKWISE);
 }
+
+/* void Run(){ */
+/*   //競技会用 */
+/*   static int state=0; */
+/*   act_tsk(Ttimer); */
+/*   act_tsk(Tmusc); */
+/*   switch(state){ */
+/*   case 0: */
+/*     SetTire(); */
+/*     state++; */
+/*     break; */
+/*   case 1: */
+/*     SetNormal(); */
+/*     state++; */
+/*     break; */
+/*   case 2: */
+/*     SetBlock(); */
+/*     state=0; */
+/*     break; */
+/*   } */
+/*   (*g_strategy)(CLOCKWISE); */
+/* } */
 
 void Setting(){
   SetFunc SettingMenu[]={
@@ -188,31 +210,12 @@ void SetTire(){
   g_strategy=Tire;
 }
 
-void SetReNormal(){
-  g_strategy=ReNormal;
-}
-void SetReBlock(){
-  g_strategy=ReBlock;
-}
-void SetReTire(){
-  g_strategy=ReTire;
-}
-
-void ChangeReverse(){
-  NameFunc ReverseMenu[] = {
-    {"RE_Normal",SetReNormal},
-    {"RE_Block",SetReBlock},
-    {"RE_Tire",SetReTire},
-  };
-  NormalMenu(ReverseMenu,ARRAYSIZE(ReverseMenu));
-}
 
 void ChangeStrategy(){
   NameFunc StrategyMenu[] = {
     {"Normal",SetNormal},
     {"Block",SetBlock},
     {"Tire",SetTire},
-    {"Reverse",ChangeReverse,1},
    };
   NormalMenu(StrategyMenu,ARRAYSIZE(StrategyMenu));
 }

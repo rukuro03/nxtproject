@@ -37,10 +37,10 @@ void InitTsk(VP_INT exinf){
 void MainTsk(VP_INT exinf){
   NameFunc MainMenu[] = {
     {"Run",Run,0},
-    {"Setting",Setting,2},
     {"ChangeStrategy",ChangeStrategy,1},
+    {"Setting",Setting,2},
+    {"Test",Test,1},
     {"Power Off",ecrobot_shutdown_NXT},
-    {"Test",Test,1}
   };
   NormalMenu(MainMenu,ARRAYSIZE(MainMenu));
 }

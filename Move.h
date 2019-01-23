@@ -7,6 +7,11 @@
 #include "monoatume_cfg.h"
 
 #define MOVE_WAITMAX 500
+//回転方向　符号で表すが、MoveLengthに使用するTurnと同一の方向
+typedef enum{
+  CLOCKWISE =1,
+  COUNTER_CLOCKWIZE=-1*CLOCKWISE,
+} RotateDirections;
 
 int GetPower();
 int GetTurn();
@@ -28,7 +33,7 @@ void MoveActivate();
 void MoveTerminate();
 FLGPTN MoveLength(int,int,int);
 FLGPTN MLIgnoreTouch(int,int,int);
-FLGPTN MoveTurn(int,int,DeviceConstants);
+FLGPTN MoveTurn(int,int);
 FLGPTN MoveCurve(int,int,int);
 void CheckLength(int);
 FLGPTN WaitForOR(FLGPTN);

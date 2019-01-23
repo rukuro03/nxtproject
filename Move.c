@@ -205,8 +205,8 @@ FLGPTN MoveLength(int pow,int turn,int length){
   FLGPTN sensor;
   //turn:-200~200
   //turnの値は「外側のタイヤに対し内側のタイヤは(100-turn%)回る」という意味
-  //turnがマイナスだと右が外側左が内側
-  //turnがプラスだと左が外側右が内側
+  //turnがマイナスだと右が外側左が内側=反時計
+  //turnがプラスだと左が外側右が内側＝時計周り
   MoveSetPower(pow);
   MoveSetSteer(turn);
   CheckLength(length);
@@ -235,12 +235,12 @@ FLGPTN MLIgnoreTouch(int pow,int turn,int length){
   return sensor;
 }
 
-FLGPTN MoveTurn(int pow,int turn,DeviceConstants slave){
-  //パワー・旋回角度・内側のモータを指定して信地旋回します
+FLGPTN MoveTurn(int pow,int turn){
+  //パワー・旋回角度を指定して信地旋回します
   
   //外側のモータが進まないと行けない距離 タイヤ間距離を半径とする円周
   int length=(g_shaftlength)*2*3.14*turn/360;
-  if(slave==Lmotor)//時計回り
+  if(turn*CLOCKWISE>=0)//時計回り
     return MoveLength(pow,200,length/2);
   else //反時計回り
     return MoveLength(pow,-200,length/2);
