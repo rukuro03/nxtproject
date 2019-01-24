@@ -60,12 +60,12 @@ typedef enum{
 #define FOOTER 7
 
 //monoatume.cで定義される関数の宣言
-void Strategy();
-void Block();
-void Tire();
-void ReNormal();
-void ReBlock();
-void ReTire();
+void Strategy(int);
+void Block(int);
+void Tire(int);
+void ReNormal(int);
+void ReBlock(int);
+void ReTire(int);
 #endif
 
 #endif

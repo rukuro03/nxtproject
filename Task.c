@@ -104,7 +104,7 @@ void CheckTsk(VP_INT exinf){
       set_flg(Fsens,efEndMove);
       break;
     }
-    dly_tsk(5);
+    dly_tsk(1);
   }
 }
 

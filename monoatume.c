@@ -48,17 +48,18 @@ void Strategy(RotateDirections dir){
   MoveCurve(-70,50*dir,180);
   MoveLength(-70,0,200);
   MoveTurn(70,45*dir);
-  ArmUp(30);
-  MLIgnoreTouch(50, 0, 1000);
+  ArmUp(50);
+  MLIgnoreTouch(100, 0, 1220);
   ArmDown(100);
   MoveLength(-50, 0, 100);
-  MoveLength(50, 0, 100);
+  ArmUp(70);
+  dly_tsk(2000);
+  MoveLength(30, 0, 100);
   dly_tsk(1000);
-  ArmUp(30);
   //帰る
   LogString("Return");
   MoveLength(-70,-10*dir,1200);
-  MoveLength(-70,0,1200);
+  MoveLength(-70,0,1400);
 }
 
 void Block(RotateDirections dir){
@@ -66,27 +67,36 @@ void Block(RotateDirections dir){
   LogString("Get Block");
   SetArmUp(-30);
   ArmDown(30);
-  MoveLength(50, 0, 1250);
-  MoveTurn(50, 95*dir);
-  MoveLength(50, 0, 900);
-  MoveLength(-30,0,20);
-  ArmUp(30);
-  MoveLength(-50, 0, 300);
-  MoveTurn(50, -60*dir);
-  MoveLength(50, 0, 1100);
-  ArmDown(10);
-  MoveLength(-70,-10*dir,1200);
-  MoveLength(-70,0,1200);
+  MoveLength(100, 0, 1250);
+  dly_tsk(500);
+  MoveTurn(70, 91*dir);
+  MoveLength(50, 0, 730);
+  MoveLength(-50,0,5);
+  dly_tsk(500);
+  ArmUp(20);
+  MoveLength(-50, 0, 400);
+
+  //MoveTurn(50, -60*dir);
+  MoveTurn(50, 70*dir);
+
+  MoveLength(50, 0, 1150);
+  ArmDown(20);
+
+  // MoveLength(-70,-10*dir,1200);
+  //MoveLength(-70,0,1200);
+  MoveLength(-40,0,100);
+  MoveCurve(-70,-60*dir,60);
+  MoveLength(70,0,700);
   SetArmUp(ARM_DEFAULT_UP);
 }
 
 void Tire(RotateDirections dir){
   //タイヤを大きな四角にもっていく
   ArmUp(30);
-  MoveLength(70, 0, 1150);
-  MoveTurn(50, 95*dir);
-  MoveLength(70, 0, 500);
+  MoveLength(100, 0, 1150);
+  MoveTurn(50, 90*dir);
+  MoveLength(100, 0, 500);
   MoveTurn(50, -120*dir);
-  MoveLength(70, 0, 1300);
-  MoveLength(-70, -10*dir, 2500);
+  MoveLength(100, 0, 1300);
+  MoveLength(-100, -10*dir, 2500);
 }

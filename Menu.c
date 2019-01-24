@@ -7,8 +7,16 @@
 #include "Task.h"
 #include "monoatume.h"
 
-static MFunc g_strategy=Strategy;
-static MFunc g_function=Strategy;
+static StrategyFunc g_strategy=Strategy;
+static MFunc g_function;
+static RotateDirections g_direction=COUNTER_CLOCKWISE;
+
+int GetDirection(){
+  return g_direction;
+}
+void SetDirection(int dir){
+  g_direction=dir;
+}
 
 void NormalMenu(NameFunc* MenuList,int cnt){
   //変数を渡す必要の無いメニュー オブジェクト指向が使えないのが不便
@@ -162,7 +170,7 @@ void SetMenu(SetFunc* MenuList,int cnt){
 void Run(){
   act_tsk(Ttimer);
   act_tsk(Tmusc);
-  (*g_strategy)(CLOCKWISE);
+  (*g_strategy)(g_direction);
 }
 
 /* void Run(){ */
@@ -189,11 +197,10 @@ void Run(){
 
 void Setting(){
   SetFunc SettingMenu[]={
+    {"Reverse",SetDirection,GetDirection()},
     {"P_GAIN",SetPgain,GetPgain()},
     {"I_GAIN",SetIgain,GetIgain()},
     {"D_GAIN",SetDgain,GetDgain()},
-    {"WHEEL",SetWheelRadius,GetWheelRadius()},
-    {"SHAFT",SetShaftLength,GetShaftLength()}
   };
   SetMenu(SettingMenu,ARRAYSIZE(SettingMenu));
 }
@@ -248,7 +255,7 @@ void RunSquare(){
   int i; 
  for(i=0;i<4;i++){
     MoveLength(70,0,1000);
-    MoveTurn(70,90,Rmotor);
+    MoveTurn(70,-90);
   }
 }
 
@@ -311,13 +318,10 @@ void SyncMotor(){
 }
 
 void Gentle(){
-  SetArmUp(ARM_T_UP);
+  SetArmUp(-30);
   ArmDown(30);
-  MoveLength(20,0,200);
-  ArmUp(30);
-  dly_tsk(1000);
-  MoveLength(-20,0,200);
-  ArmDown(10);
+  ArmUp(20);
+  ArmDown(20);
 }
 
 void TestArm(){
@@ -340,7 +344,7 @@ void CountArm(){
 }
 
 void TurnTest1(){
-  MoveTurn(70,90,Lmotor);
+  MoveTurn(70,90);
 }
 
 void TurnTest2(){

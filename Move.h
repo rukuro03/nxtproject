@@ -10,7 +10,7 @@
 //回転方向　符号で表すが、MoveLengthに使用するTurnと同一の方向
 typedef enum{
   CLOCKWISE =1,
-  COUNTER_CLOCKWIZE=-1*CLOCKWISE,
+  COUNTER_CLOCKWISE=-1*CLOCKWISE,
 } RotateDirections;
 
 int GetPower();

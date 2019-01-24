@@ -18,6 +18,9 @@ typedef struct _SetFunc{
 
 void NormalMenu(NameFunc*,int);
 void SetMenu(SetFunc*,int);
+//セッタ－
+void SetDirection(int);
+int GetDirection();
 //メインメニューの項目
 void Run();
 void Setting();

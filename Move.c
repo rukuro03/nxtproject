@@ -237,10 +237,14 @@ FLGPTN MLIgnoreTouch(int pow,int turn,int length){
 
 FLGPTN MoveTurn(int pow,int turn){
   //パワー・旋回角度を指定して信地旋回します
-  
+  int lturn;
+  if(turn>=0)
+    lturn=turn;
+  else
+    lturn=-turn;
   //外側のモータが進まないと行けない距離 タイヤ間距離を半径とする円周
-  int length=(g_shaftlength)*2*3.14*turn/360;
-  if(turn*CLOCKWISE>=0)//時計回り
+  int length=(g_shaftlength)*2*3.14*lturn/360;
+  if(turn>=0)//時計回り
     return MoveLength(pow,200,length/2);
   else //反時計回り
     return MoveLength(pow,-200,length/2);
